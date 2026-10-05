@@ -20,6 +20,7 @@ class DemoSeeder extends Seeder
 {
     public function run(): void
     {
+        abort_if(app()->isProduction(), 1, 'DemoSeeder creates accounts with a known password; never run it in production.');
         mt_srand(42); // deterministic demo data
         $this->call(DatabaseSeeder::class);
 

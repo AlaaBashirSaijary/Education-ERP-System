@@ -1,0 +1,61 @@
+# قاعدة البيانات
+
+20 جدولاً: 10 جداول للمدرسة، وجدول `users`، و9 جداول يضيفها Laravel (الجلسات، الطوابير، الكاش، التوكنات، سجل الـ migrations).
+تُبنى كلها من ملفات `database/migrations/` بأمر واحد: `php artisan migrate`. اختُبر التطبيق على SQLite وPostgreSQL 16.
+
+```mermaid
+erDiagram
+    users ||--o{ students : "parent_id (ولي الأمر)"
+    school_classes ||--o{ students : ""
+    students ||--o{ attendances : ""
+    users ||--o{ attendances : "recorded_by"
+    school_classes ||--o{ exams : ""
+    subjects ||--o{ exams : ""
+    exams ||--o{ marks : ""
+    students ||--o{ marks : ""
+    school_classes ||--o{ timetable_entries : ""
+    subjects ||--o{ timetable_entries : ""
+    users ||--o{ timetable_entries : "teacher_id"
+    students ||--o{ fees : "قسط"
+    fees ||--o{ payments : "دفعة"
+    users ||--o{ payments : "received_by"
+    students |o--o{ notification_logs : ""
+
+    users { id id PK  string role "admin|teacher|accountant|parent"  string email UK  string phone }
+    school_classes { id id PK  string name  string section "UK(name,section)" }
+    subjects { id id PK  string code UK  string name }
+    students { id id PK  string student_no UK  string qr_token UK  string fingerprint_id UK  string parent_phone  bool active }
+    attendances { id id PK  date date  string status "present|late|absent"  string method "qr|fingerprint|manual" }
+    exams { id id PK  string name  int max_mark  date date }
+    marks { id id PK  decimal mark }
+    timetable_entries { id id PK  int day_of_week  int period  time starts_at  time ends_at }
+    fees { id id PK  string title  decimal amount  date due_date }
+    payments { id id PK  decimal amount  string method  timestamp paid_at }
+    notification_logs { id id PK  string phone  string channel  string type  string status }
+```
+
+## قرارات التصميم
+
+| القرار | السبب |
+|---|---|
+| جدول `users` واحد مع عمود `role` | أربعة أدوار بصلاحيات بسيطة. ولي الأمر مستخدم عادي، والطالب يرتبط به بـ `students.parent_id`. |
+| `students.parent_phone` منفصل عن `users.phone` | رسائل واتساب تحتاج رقماً حتى لو لم يكن لولي الأمر حساب. `Student::notifyPhone()` يفضّل رقم الطالب ثم رقم الحساب. |
+| `qr_token` عشوائي (48 حرفاً) وليس رقم الطالب | البطاقة المطبوعة لا تكشف تسلسل الأرقام فلا يمكن تخمين بطاقة طالب آخر. والحقل مخفي من JSON. |
+| `unique(student_id, date)` في `attendances` | سجل واحد لكل طالب كل يوم يفرضه قاعدة البيانات نفسها، فالمسح المكرر لا ينتج سجلين حتى مع طلبين متزامنين. |
+| `unique(exam_id, student_id)` في `marks` | علامة واحدة لكل امتحان. إعادة الإدخال تصحّح القيمة ولا تكرّرها. |
+| القسط صف في `fees` والدفعات صفوف في `payments` | يدعم الدفع الجزئي. المدفوع والمتبقي والحالة (مدفوع/جزئي/متأخر) تُحسب من الدفعات ولا تُخزَّن، فلا يمكن أن تتناقض. |
+| المبالغ `decimal(10,2)` وتقسيم الخطة بالفلس | لا أخطاء فاصلة عائمة. القسط الأخير يمتص فرق التقريب (1000÷3 = 333.33 + 333.33 + 333.34). |
+| فهرسان فريدان في `timetable_entries` | `(صف، يوم، حصة)` و`(معلم، يوم، حصة)`: لا يمكن حجز معلم في حصتين متزامنتين ولو تجاوز أحدهم الواجهة. |
+| `notification_logs` مستقل عن جدول `jobs` | سجل دائم لكل رسالة (من، لمن، الحالة، سبب الفشل) يبقى بعد انتهاء المهمة. |
+
+## قواعد الحذف (cascade)
+
+- حذف طالب يحذف حضوره وعلاماته وأقساطه ودفعاته. لذلك الواجهة تطلب تأكيداً.
+- حذف صف يحذف طلابه، فالواجهة ترفض حذف صف فيه طلاب.
+- حذف حساب ولي أمر يفك ارتباط أبنائه (`null`) ولا يحذفهم.
+
+## ما ينقص القاعدة حالياً
+
+- لا يوجد مفهوم **عام دراسي / فصل**: العلامات والأقساط غير مرتبطة بسنة، فنقل الطلاب لصف جديد يخلط التاريخ. هذا أهم ما يُضاف قبل سنة دراسية ثانية.
+- لا **soft delete** ولا سجل تدقيق للتعديلات والحذف.
+- مدرسة واحدة فقط (لا عمود `school_id`).

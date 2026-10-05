@@ -12,6 +12,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        // Behind a PaaS load balancer: TRUSTED_PROXIES=* (or a comma list of IPs/CIDRs) so https and client IPs are read correctly.
+        $proxies = env('TRUSTED_PROXIES');
+        $middleware->trustProxies(at: $proxies === '*' ? '*' : ($proxies ? array_map('trim', explode(',', $proxies)) : null));
         $middleware->web(append: [\App\Http\Middleware\SetLocale::class]);
         $middleware->redirectGuestsTo('/login');
         $middleware->alias(['role' => \App\Http\Middleware\EnsureRole::class]);
