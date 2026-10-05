@@ -12,6 +12,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        $middleware->web(append: [\App\Http\Middleware\SetLocale::class]);
+        $middleware->redirectGuestsTo('/login');
         $middleware->alias(['role' => \App\Http\Middleware\EnsureRole::class]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

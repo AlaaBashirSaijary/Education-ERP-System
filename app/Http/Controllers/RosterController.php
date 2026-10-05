@@ -55,4 +55,11 @@ class RosterController extends Controller
 
         return response($svg, 200, ['Content-Type' => 'image/svg+xml']);
     }
+
+    /** Printable ID card with QR code. */
+    public function card(Student $student)
+    {
+        return view('student-card', ['student' => $student->load('schoolClass'),
+            'qr' => \SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')->size(180)->generate($student->qr_token)]);
+    }
 }

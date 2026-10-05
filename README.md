@@ -6,11 +6,17 @@
 ## التشغيل
 ```bash
 composer install && cp .env.example .env && php artisan key:generate
+npm ci && npm run build            # Tailwind + Livewire assets
 php artisan migrate --seed          # admin@school.test / change-me-now
 php artisan queue:work              # لإرسال الإشعارات
 php artisan schedule:work           # إغلاق اليوم + تذكير الأقساط
+php artisan db:seed --class=DemoSeeder   # اختياري: بيانات تجريبية (teacher@/accountant@/parent@school.test، كلمة المرور password)
 php artisan test
 ```
+الواجهة على `/` — عربية (RTL) افتراضياً مع زر 🌐 للتبديل إلى الإنجليزية (LTR). الترجمة في `lang/ar.json`.
+
+## صفحات الواجهة (Livewire)
+لوحة التحكم، الطلاب (+ بطاقة QR للطباعة)، الحضور اليدوي، ماسح البوابة (قارئ باركود/QR أو الكاميرا)، العلامات وشهادة الطالب، الأقساط والمدفوعات، جدول الحصص، سجل رسائل الأهل.
 اضبط `MESSAGING_CHANNEL` (`log` | `whatsapp` | `sms`) ومفاتيح المزوّد في `.env`.
 
 ## الأدوار

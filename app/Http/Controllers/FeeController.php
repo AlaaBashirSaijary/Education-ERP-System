@@ -3,9 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Fee;
-use App\Models\Payment;
 use App\Models\Student;
-use App\Services\Messaging\ParentNotifier;
+use App\Services\FeeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -60,17 +59,7 @@ class FeeController extends Controller
             'reference' => 'nullable|string',
         ]);
 
-        // Lock the fee row so concurrent receipts can't overpay it.
-        $payment = DB::transaction(function () use ($fee, $data, $request) {
-            $locked = Fee::with('payments')->lockForUpdate()->findOrFail($fee->id);
-            abort_if((float) $data['amount'] > (float) $locked->balance, 422, 'المبلغ أكبر من المتبقي على القسط.');
-
-            return Payment::create($data + ['fee_id' => $fee->id, 'paid_at' => now(), 'received_by' => $request->user()->id]);
-        });
-
-        $fee->load('payments', 'student');
-        app(ParentNotifier::class)->notify($fee->student, 'payment',
-            "تم استلام {$payment->amount} للطالب {$fee->student->name} ({$fee->title}). المتبقي: {$fee->balance}");
+        $payment = app(FeeService::class)->pay($fee, (float) $data['amount'], $data['method'], $data['reference'] ?? null, $request->user());
 
         return response()->json($payment, 201);
     }

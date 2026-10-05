@@ -1,0 +1,12 @@
+{
+ "present": "Present",
+ "late": "Late",
+ "absent": "Absent",
+ "paid": "Paid",
+ "partial": "Partial",
+ "unpaid": "Unpaid",
+ "overdue": "Overdue",
+ "sent": "Sent",
+ "failed": "Failed",
+ "pending": "Pending"
+}

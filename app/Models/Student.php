@@ -25,6 +25,12 @@ class Student extends Model
         });
     }
 
+    /** Staff see everyone; parents only their own children. */
+    public function scopeVisibleTo($query, User $user)
+    {
+        return $user->hasRole('parent') ? $query->where('parent_id', $user->id) : $query;
+    }
+
     public function schoolClass(): BelongsTo
     {
         return $this->belongsTo(SchoolClass::class);
