@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Behind a PaaS load balancer: TRUSTED_PROXIES=* (or a comma list of IPs/CIDRs) so https and client IPs are read correctly.
         $proxies = env('TRUSTED_PROXIES');
         $middleware->trustProxies(at: $proxies === '*' ? '*' : ($proxies ? array_map('trim', explode(',', $proxies)) : null));
+        $middleware->prepend(\App\Http\Middleware\AssumeHttps::class);
         $middleware->web(append: [\App\Http\Middleware\SetLocale::class]);
         $middleware->redirectGuestsTo('/login');
         // The UI language is also kept in a plain cookie so the static offline page can read it.

@@ -580,4 +580,34 @@ class WebUiTest extends TestCase
         $this->withUnencryptedCookie('ui_lang', 'en')->get('/login')->assertSee('dir="ltr"', false)->assertSee('Welcome back');
         $this->withUnencryptedCookie('ui_lang', 'xx')->get('/login')->assertSee('dir="rtl"', false);   // junk falls back to Arabic
     }
+
+    /* ---------- tunnels / proxies ---------- */
+
+    public function test_assets_are_root_relative_so_they_load_on_any_scheme_or_host(): void
+    {
+        $html = $this->get('http://abc.example.com/login')->assertOk()->getContent();
+        $this->assertMatchesRegularExpression('#<link rel="stylesheet" href="/build/assets/app-[^"]+\.css"#', $html);
+        $this->assertMatchesRegularExpression('#<script type="module" src="/build/assets/app-[^"]+\.js"#', $html);
+        $this->assertStringNotContainsString('http://abc.example.com/build', $html);
+    }
+
+    public function test_without_assume_https_a_tunnel_that_hides_its_scheme_gets_http_links(): void
+    {
+        config(['school.assume_https' => false]);
+        $this->get('http://abc.lhr.life/login')->assertSee('action="http://abc.lhr.life/login"', false);   // the bug this setting fixes
+    }
+
+    public function test_assume_https_fixes_links_behind_a_tunnel_that_does_not_send_forwarded_proto(): void
+    {
+        config(['school.assume_https' => true]);
+        $this->get('http://abc.lhr.life/login')->assertSee('action="https://abc.lhr.life/login"', false);
+    }
+
+    public function test_assume_https_leaves_localhost_and_lan_addresses_on_plain_http(): void
+    {
+        config(['school.assume_https' => true]);
+        foreach (['http://localhost/login', 'http://192.168.1.5/login', 'http://127.0.0.1/login'] as $url) {
+            $this->get($url)->assertSee('action="'.$url.'"', false);
+        }
+    }
 }

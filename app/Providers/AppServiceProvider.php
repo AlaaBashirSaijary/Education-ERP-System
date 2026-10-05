@@ -19,6 +19,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Stylesheets/scripts are referenced as /build/... so they load whatever scheme or host the visitor used.
+        \Illuminate\Support\Facades\Vite::createAssetPathsUsing(fn (string $path, ?bool $secure = null) => '/'.ltrim($path, '/'));
+
         \Illuminate\Auth\Notifications\ResetPassword::toMailUsing(function ($user, string $token) {
             $url = url(route('password.reset', ['token' => $token, 'email' => $user->getEmailForPasswordReset()], false));
 

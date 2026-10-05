@@ -15,6 +15,8 @@ return [
      * NEVER enable this on a database that holds real school data.
      */
     'demo_mode' => (bool) env('SCHOOL_DEMO_MODE', false),
+    // Treat public hostnames as https even when a proxy does not say so (set by scripts/share-demo.sh).
+    'assume_https' => (bool) env('ASSUME_HTTPS', false),
     'demo_reset_hours' => max(1, (int) env('DEMO_RESET_HOURS', 6)),
     // Where interested visitors reach you: international number without "+" (e.g. 962791234567) and/or an email.
     'contact_whatsapp' => preg_replace('/\D+/', '', (string) env('DEMO_WHATSAPP', '')),

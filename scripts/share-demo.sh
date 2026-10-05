@@ -16,7 +16,7 @@ if [ -z "${DEMO_WHATSAPP:-}" ] && [ -t 0 ]; then
 fi
 
 # Demo mode only for this run (environment variables beat .env, so .env stays as it was).
-export SCHOOL_DEMO_MODE=true APP_ENV=local APP_DEBUG=false TRUSTED_PROXIES='*'
+export SCHOOL_DEMO_MODE=true APP_ENV=local APP_DEBUG=false TRUSTED_PROXIES='*' ASSUME_HTTPS=true
 export SCHOOL_NAME="${SCHOOL_NAME:-مدرستنا}" DEMO_WHATSAPP="${DEMO_WHATSAPP:-}" DEMO_EMAIL="${DEMO_EMAIL:-}"
 export DB_CONNECTION=sqlite DB_DATABASE="$PWD/database/demo.sqlite"
 export SESSION_DRIVER=database QUEUE_CONNECTION=database CACHE_STORE=database MESSAGING_CHANNEL=log
@@ -42,6 +42,10 @@ if [ "${NO_TUNNEL:-}" = "1" ]; then wait; exit 0; fi
 
 echo "  Creating the public link... (keep this window open; press Ctrl+C to stop sharing)"
 echo
+if ! command -v cloudflared >/dev/null 2>&1 && command -v brew >/dev/null 2>&1 && [ -t 0 ]; then
+  read -r -p "  cloudflared gives a faster, steadier link. Install it now with Homebrew? [Y/n] " yn || true
+  case "${yn:-Y}" in [Yy]*|"") brew install cloudflared || true ;; esac
+fi
 if command -v cloudflared >/dev/null 2>&1; then
   cloudflared tunnel --no-autoupdate --url "http://127.0.0.1:$PORT"
 else

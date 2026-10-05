@@ -1,4 +1,1 @@
-import axios from 'axios';
-window.axios = axios;
-
-window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+// Livewire brings its own HTTP layer and Alpine, so no extra libraries are needed here.
