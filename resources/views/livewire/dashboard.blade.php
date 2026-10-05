@@ -7,6 +7,7 @@
     $pct = $billed > 0 ? round($collected / $billed * 100) : 0;
 @endphp
 <div class="space-y-6">
+    <x-flash />
     {{-- Greeting --}}
     <section class="relative overflow-hidden rounded-3xl bg-sidebar p-6 text-white shadow-card ring-1 ring-white/10 sm:p-8">
         <div class="absolute inset-y-0 end-0 w-2/3 text-white/[.07] [mask-image:linear-gradient(to_left,black,transparent)] rtl:[mask-image:linear-gradient(to_right,black,transparent)]"><x-pattern /></div>

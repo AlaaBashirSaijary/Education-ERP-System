@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Services\GuardianLinkService;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Component;
 
@@ -12,6 +13,8 @@ class Profile extends Component
     public string $current_password = '';
     public string $password = '';
     public string $password_confirmation = '';
+    public string $child_no = '';
+    public string $child_phone = '';
 
     public function mount(): void
     {
@@ -42,6 +45,21 @@ class Profile extends Component
         auth()->user()->update(['password' => $d['password']]);
         $this->reset('current_password', 'password', 'password_confirmation');
         session()->flash('ok', __('Password changed.'));
+    }
+
+    /** A parent links another child with the same two-fact check used at sign-up. */
+    public function linkChild(GuardianLinkService $links): void
+    {
+        abort_unless(auth()->user()->hasRole('parent'), 403);
+        $d = $this->validate(['child_no' => 'required|string|max:30', 'child_phone' => 'required|string|max:20']);
+
+        if (! $links->claim(auth()->user(), $d['child_no'], $d['child_phone'])) {
+            $this->addError('child_no', __('We could not match these details to a student. Check the student number and the phone number the school has on file, or contact the school.'));
+
+            return;
+        }
+        $this->reset('child_no', 'child_phone');
+        session()->flash('ok', __('Child linked to your account.'));
     }
 
     public function render()

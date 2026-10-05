@@ -150,6 +150,7 @@
 }
 
 @layer components {
+    .font-display { word-spacing: .14em; }
     .font-num { font-variant-numeric: tabular-nums; }
     .card { @apply rounded-2xl bg-surface p-5 shadow-card ring-1 ring-slate-200/80; }
     .card-flat { @apply rounded-2xl bg-surface ring-1 ring-slate-200/80; }
@@ -213,10 +214,16 @@
     .seg .on-absent { background: #D13A3A; color: #fff; }
     .seg label.on-present:hover, .seg label.on-late:hover, .seg label.on-absent:hover { filter: brightness(.95); }
 
+    .float-a { animation: floaty 7s ease-in-out infinite; }
+    .float-b { animation: floaty 8s ease-in-out -3s infinite; }
+    .float-c { animation: floaty 9s ease-in-out -5s infinite; }
+
     .stagger > * { animation: rise .4s ease-out both; }
     .stagger > *:nth-child(2) { animation-delay: .05s; } .stagger > *:nth-child(3) { animation-delay: .1s; }
     .stagger > *:nth-child(4) { animation-delay: .15s; } .stagger > *:nth-child(5) { animation-delay: .2s; }
 }
+
+@keyframes floaty { 0%, 100% { transform: translateY(0) rotate(var(--tw-rotate, 0deg)); } 50% { transform: translateY(-8px) rotate(var(--tw-rotate, 0deg)); } }
 
 @media (prefers-reduced-motion: reduce) {
     *, ::before, ::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }

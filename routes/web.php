@@ -9,6 +9,14 @@ Route::get('lang/{locale}', [WebAuthController::class, 'lang'])->name('lang');
 Route::middleware('guest')->group(function () {
     Route::get('login', [WebAuthController::class, 'show'])->name('login');
     Route::post('login', [WebAuthController::class, 'login'])->middleware('throttle:10,1')->name('login.attempt');
+
+    Route::get('register', [\App\Http\Controllers\Auth\RegisterController::class, 'show'])->name('register');
+    Route::post('register', [\App\Http\Controllers\Auth\RegisterController::class, 'store'])->middleware('throttle:6,1')->name('register.store');
+
+    Route::get('forgot-password', [\App\Http\Controllers\Auth\PasswordResetController::class, 'request'])->name('password.request');
+    Route::post('forgot-password', [\App\Http\Controllers\Auth\PasswordResetController::class, 'email'])->middleware('throttle:5,1')->name('password.email');
+    Route::get('reset-password/{token}', [\App\Http\Controllers\Auth\PasswordResetController::class, 'form'])->name('password.reset');
+    Route::post('reset-password', [\App\Http\Controllers\Auth\PasswordResetController::class, 'update'])->middleware('throttle:5,1')->name('password.update');
 });
 
 Route::middleware('auth')->group(function () {

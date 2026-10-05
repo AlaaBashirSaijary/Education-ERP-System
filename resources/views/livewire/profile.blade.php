@@ -14,4 +14,15 @@
         <div><label class="label">{{ __('Confirm new password') }}</label><input type="password" wire:model="password_confirmation" class="input" dir="ltr"></div>
         <button class="btn-primary">{{ __('Change password') }}</button>
     </form>
+    @if (auth()->user()->hasRole('parent'))
+        <form wire:submit="linkChild" class="card space-y-4 md:col-span-2">
+            <div><h2 class="text-base font-bold">{{ __('Link another child') }}</h2>
+                <p class="text-sm text-slate-500">{{ __('Enter the student number and the phone number the school has on file.') }}</p></div>
+            <div class="grid gap-4 sm:grid-cols-2">
+                <div><label class="label">{{ __('Student number') }}</label><input wire:model="child_no" class="input" dir="ltr">@error('child_no')<p class="err">{{ $message }}</p>@enderror</div>
+                <div><label class="label">{{ __('Phone number on file at school') }}</label><input wire:model="child_phone" class="input" dir="ltr">@error('child_phone')<p class="err">{{ $message }}</p>@enderror</div>
+            </div>
+            <button class="btn-primary">{{ __('Link child') }}</button>
+        </form>
+    @endif
 </div>

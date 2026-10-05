@@ -312,4 +312,103 @@ class WebUiTest extends TestCase
         $this->assertTrue($created->fresh()->is_current);
         $this->assertFalse($current->fresh()->is_current);
     }
+
+    /* ---------- sign-up & password reset ---------- */
+
+    private function signup(array $over = []): array
+    {
+        return $over + ['name' => 'New Parent', 'email' => 'np@x.test', 'phone' => '+962 79 000 0000', 'student_no' => 'S-77',
+            'password' => 'longenough1', 'password_confirmation' => 'longenough1'];
+    }
+
+    public function test_register_page_renders_in_both_languages(): void
+    {
+        $this->get('/register')->assertOk()->assertSee('إنشاء حساب ولي أمر');
+        $this->withSession(['locale' => 'en'])->get('/register')->assertOk()->assertSee('Create a parent account');
+        $this->get('/forgot-password')->assertOk();
+        $this->get('/login')->assertOk()->assertSee('/register', false)->assertSee('/forgot-password', false);
+    }
+
+    public function test_parent_signs_up_and_is_linked_to_their_child(): void
+    {
+        $student = $this->student(['student_no' => 'S-77', 'parent_phone' => '0790000000']);   // different phone format on purpose
+
+        $this->post('/register', $this->signup())->assertRedirect('/dashboard');
+
+        $user = User::where('email', 'np@x.test')->first();
+        $this->assertSame('parent', $user->role);                                // can never self-register as staff
+        $this->assertSame($user->id, $student->fresh()->parent_id);
+        $this->assertAuthenticatedAs($user);
+        $this->get('/students')->assertSee('Sara');
+    }
+
+    public function test_signup_cannot_claim_a_student_with_wrong_details_or_one_already_claimed(): void
+    {
+        $student = $this->student(['student_no' => 'S-77', 'parent_phone' => '+962790000000']);
+
+        // wrong phone
+        $this->post('/register', $this->signup(['phone' => '+962795555555']))->assertSessionHasErrors('student_no');
+        // unknown student number
+        $this->post('/register', $this->signup(['student_no' => 'NOPE']))->assertSessionHasErrors('student_no');
+        $this->assertDatabaseMissing('users', ['email' => 'np@x.test']);          // no half-created account
+        $this->assertNull($student->fresh()->parent_id);
+
+        // role field is ignored even if posted
+        $this->post('/register', $this->signup(['role' => 'admin']))->assertRedirect('/dashboard');
+        $this->assertSame('parent', User::where('email', 'np@x.test')->value('role'));
+
+        // second family cannot take the same student
+        $this->post('/logout');
+        $this->post('/register', $this->signup(['email' => 'other@x.test']))->assertSessionHasErrors('student_no');
+        $this->assertDatabaseMissing('users', ['email' => 'other@x.test']);
+    }
+
+    public function test_signup_validation_and_duplicate_email(): void
+    {
+        $this->student(['student_no' => 'S-77', 'parent_phone' => '+962790000000']);
+        User::factory()->create(['email' => 'np@x.test']);
+        $this->post('/register', $this->signup())->assertSessionHasErrors('email');
+        $this->post('/register', $this->signup(['email' => 'ok@x.test', 'password_confirmation' => 'different']))->assertSessionHasErrors('password');
+    }
+
+    public function test_parent_can_link_another_child_from_the_profile(): void
+    {
+        $parent = $this->user('parent');
+        $second = $this->student(['student_no' => 'S-88', 'name' => 'Second', 'parent_phone' => '+962791111111']);
+
+        Livewire::actingAs($parent)->test(Pages\Profile::class)
+            ->set('child_no', 'S-88')->set('child_phone', '000')->call('linkChild')->assertHasErrors('child_no')
+            ->set('child_phone', '0791111111')->call('linkChild')->assertHasNoErrors();
+        $this->assertSame($parent->id, $second->fresh()->parent_id);
+
+        Livewire::actingAs($this->user('teacher'))->test(Pages\Profile::class)->call('linkChild')->assertForbidden();
+    }
+
+    public function test_password_reset_flow(): void
+    {
+        \Illuminate\Support\Facades\Notification::fake();
+        $user = User::factory()->create(['email' => 'forgot@x.test']);
+
+        $this->post('/forgot-password', ['email' => 'forgot@x.test'])->assertSessionHas('status');
+        $this->post('/forgot-password', ['email' => 'nobody@x.test'])->assertSessionHas('status');   // same answer: no account probing
+        \Illuminate\Support\Facades\Notification::assertSentTo($user, \Illuminate\Auth\Notifications\ResetPassword::class, function ($n) use ($user) {
+            $this->get('/reset-password/'.$n->token.'?email=forgot@x.test')->assertOk();
+            $this->post('/reset-password', ['token' => 'bad', 'email' => 'forgot@x.test', 'password' => 'brandnew123', 'password_confirmation' => 'brandnew123'])->assertSessionHasErrors('email');
+            $this->post('/reset-password', ['token' => $n->token, 'email' => 'forgot@x.test', 'password' => 'brandnew123', 'password_confirmation' => 'brandnew123'])->assertRedirect('/login');
+
+            return true;
+        });
+        $this->assertTrue(\Illuminate\Support\Facades\Hash::check('brandnew123', $user->fresh()->password));
+    }
+
+    public function test_demo_logins_only_show_when_enabled_and_remember_me_works(): void
+    {
+        $this->get('/login')->assertDontSee('admin@school.test');
+        config(['school.demo_logins' => true]);
+        $this->get('/login')->assertSee('admin@school.test');
+
+        User::factory()->create(['email' => 'r@x.test', 'role' => 'admin']);
+        $this->post('/login', ['email' => 'r@x.test', 'password' => 'password', 'remember' => '1'])->assertRedirect('/dashboard');
+        $this->assertNotNull(User::where('email', 'r@x.test')->value('remember_token'));
+    }
 }

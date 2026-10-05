@@ -18,7 +18,7 @@ class WebAuthController extends Controller
     {
         $credentials = $request->validate(['email' => 'required|email', 'password' => 'required']);
 
-        if (! Auth::attempt($credentials)) {
+        if (! Auth::attempt($credentials, $request->boolean('remember'))) {
             throw ValidationException::withMessages(['email' => __('Invalid credentials.')]);
         }
 

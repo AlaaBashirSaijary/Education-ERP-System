@@ -14,6 +14,7 @@ if [ -n "${CODESPACE_NAME:-}" ]; then
   grep -q '^TRUSTED_PROXIES=' .env || echo 'TRUSTED_PROXIES=*' >> .env
 fi
 
+grep -q '^SCHOOL_DEMO_LOGINS=' .env || echo 'SCHOOL_DEMO_LOGINS=true' >> .env
 touch database/database.sqlite
 php artisan migrate:fresh --force
 php artisan db:seed --class=DemoSeeder --force
