@@ -403,6 +403,7 @@ class WebUiTest extends TestCase
 
     public function test_demo_logins_only_show_when_enabled_and_remember_me_works(): void
     {
+        config(['school.demo_logins' => false]);
         $this->get('/login')->assertDontSee('admin@school.test');
         config(['school.demo_logins' => true]);
         $this->get('/login')->assertSee('admin@school.test');
