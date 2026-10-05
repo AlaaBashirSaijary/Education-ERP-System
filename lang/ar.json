@@ -357,5 +357,11 @@
  "Today is recorded as leave for you.": "اليوم مسجّل لك كإجازة.",
  "Update check-out": "تحديث الانصراف",
  "You have not checked in yet.": "لم تسجّل حضورك بعد.",
- "leave": "إجازة"
+ "leave": "إجازة",
+ "Install the app": "تثبيت التطبيق",
+ "Open this page in Safari, then tap the Share button": "افتح هذه الصفحة في Safari ثم اضغط زر المشاركة",
+ "Choose “Add to Home Screen”": "اختر «إضافة إلى الشاشة الرئيسية»",
+ "Tap “Add”. The app appears on your home screen.": "اضغط «إضافة». سيظهر التطبيق على شاشتك الرئيسية.",
+ "Got it": "حسناً",
+ "You are offline. Changes cannot be saved until you reconnect.": "أنت غير متصل بالإنترنت. لا يمكن حفظ التغييرات حتى يعود الاتصال."
 }

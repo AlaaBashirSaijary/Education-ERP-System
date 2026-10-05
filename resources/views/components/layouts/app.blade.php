@@ -39,8 +39,9 @@
 <html lang="{{ app()->getLocale() }}" dir="{{ $rtl ? 'rtl' : 'ltr' }}">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#0B2327">
+    <x-pwa-head />
     <title>{{ $title ?? config('school.name') }} – {{ config('school.name') }}</title>
     <script>(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark')}catch(e){}})()</script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -51,7 +52,7 @@
     {{-- Sidebar --}}
     <aside class="fixed inset-y-0 start-0 z-40 flex w-72 flex-col bg-sidebar text-white transition-transform duration-200 {{ $rtl ? 'translate-x-full' : '-translate-x-full' }} lg:sticky lg:top-0 lg:h-screen lg:translate-x-0"
            :class="open && '!translate-x-0'">
-        <div class="relative overflow-hidden px-5 pb-5 pt-6">
+        <div class="relative overflow-hidden px-5 pb-5 pt-[max(1.5rem,env(safe-area-inset-top))]">
             <div class="absolute -top-6 end-0 h-32 w-32 text-white/[.06]"><x-pattern /></div>
             <a href="{{ route('dashboard') }}" wire:navigate class="relative flex items-center gap-3">
                 <x-emblem class="h-10 w-10 text-brand-400" />
@@ -80,7 +81,8 @@
             @endforeach
         </nav>
 
-        <div class="border-t border-white/10 p-3">
+        <div class="border-t border-white/10 p-3 pb-[max(.75rem,env(safe-area-inset-bottom))]">
+            <x-pwa-install class="mb-2" />
             <div class="flex items-center gap-3 rounded-xl p-2">
                 <a href="{{ route('profile') }}" wire:navigate class="flex min-w-0 flex-1 items-center gap-3" title="{{ __('My profile') }}">
                     <x-avatar :name="$user->name" size="h-10 w-10 text-sm" />
@@ -98,6 +100,10 @@
     <div x-show="open" x-cloak @click="open = false" class="fixed inset-0 z-30 bg-black/50 backdrop-blur-sm lg:hidden"></div>
 
     <div class="flex min-w-0 flex-1 flex-col">
+        <div x-data="{ off: !navigator.onLine }" @online.window="off = false" @offline.window="off = true" x-show="off" x-cloak
+             class="flex items-center justify-center gap-2 bg-amber-500 px-4 py-2 pt-[max(.5rem,env(safe-area-inset-top))] text-sm font-semibold text-[#1c1300]" role="status">
+            <x-icon name="info" class="h-4 w-4" /> {{ __('You are offline. Changes cannot be saved until you reconnect.') }}
+        </div>
         <header class="topbar sticky top-0 z-20 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-slate-200/70 bg-canvas/85 px-4 py-3 backdrop-blur sm:px-6 lg:px-8">
             <div class="flex min-w-0 flex-1 items-center gap-3 sm:flex-none">
                 <button class="btn-ghost !px-2.5 lg:hidden" @click="open = !open" aria-label="{{ __('Menu') }}"><x-icon name="menu" /></button>

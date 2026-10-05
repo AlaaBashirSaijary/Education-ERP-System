@@ -141,6 +141,9 @@
     html { @apply font-sans antialiased; font-feature-settings: 'tnum' 0; }
     body { @apply bg-canvas text-slate-800; }
     h1, h2, h3 { text-wrap: balance; }
+    html { -webkit-tap-highlight-color: transparent; }
+    /* Installed app on phones with a notch / home indicator */
+    header.topbar { padding-top: max(.75rem, env(safe-area-inset-top)); }
     ::selection { background: rgb(var(--brand-300) / .45); }
     [x-cloak] { display: none !important; }
     :focus-visible { @apply outline-none ring-2 ring-brand-500 ring-offset-2 ring-offset-canvas; }

@@ -4,6 +4,10 @@ use App\Http\Controllers\WebAuthController;
 use App\Livewire;
 use Illuminate\Support\Facades\Route;
 
+// PWA: public, because the browser fetches them before anyone signs in.
+Route::get('manifest.webmanifest', [\App\Http\Controllers\PwaController::class, 'manifest'])->name('manifest');
+Route::view('offline', 'offline')->name('offline');
+
 Route::get('lang/{locale}', [WebAuthController::class, 'lang'])->name('lang');
 
 Route::middleware('guest')->group(function () {

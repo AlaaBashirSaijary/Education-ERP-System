@@ -507,4 +507,77 @@ class WebUiTest extends TestCase
         $this->assertStringContainsString("'=HYPERLINK", $csv);                    // formula injection neutralised
         $this->get('/staff-attendance?tab=monthly')->assertOk()->assertSee('66.7');
     }
+
+    /* ---------- PWA ---------- */
+
+    public function test_manifest_is_valid_and_points_at_real_icons(): void
+    {
+        config(['school.name' => 'مدرسة النور']);
+        $r = $this->get('/manifest.webmanifest')->assertOk();
+        $this->assertStringContainsString('application/manifest+json', $r->headers->get('Content-Type'));
+        $m = $r->json();
+
+        $this->assertSame('مدرسة النور – إدارة المدرسة', $m['name']);
+        $this->assertSame('standalone', $m['display']);
+        $this->assertSame('/', $m['scope']);
+        $this->assertStringStartsWith($m['scope'], $m['start_url']);            // start_url must be inside the scope
+        $this->assertSame('#0B2327', $m['theme_color']);
+
+        $purposes = [];
+        foreach ($m['icons'] as $icon) {
+            $file = public_path(ltrim($icon['src'], '/'));
+            $this->assertFileExists($file);
+            [$w, $h] = getimagesize($file);
+            $this->assertSame($icon['sizes'], "{$w}x{$h}");                      // declared size matches the file
+            $purposes[] = $icon['purpose'];
+        }
+        $this->assertContains('maskable', $purposes);
+        $this->assertTrue(collect($m['icons'])->contains(fn ($i) => $i['sizes'] === '512x512' && $i['purpose'] === 'any'));
+        foreach ($m['shortcuts'] as $sc) {
+            $this->assertStringStartsWith('/', $sc['url']);
+        }
+        $this->assertFileExists(public_path('apple-touch-icon.png'));
+        $this->assertSame([180, 180], array_slice(getimagesize(public_path('apple-touch-icon.png')), 0, 2));
+    }
+
+    public function test_offline_page_is_public_and_self_contained(): void
+    {
+        $this->get('/offline')->assertOk()->assertSee('أنت غير متصل بالإنترنت')->assertSee('You are offline')
+            ->assertDontSee('/build/', false)          // must work with nothing but itself in the cache
+            ->assertDontSee('src="http', false);
+    }
+
+    public function test_service_worker_never_caches_pages_or_livewire(): void
+    {
+        $sw = file_get_contents(public_path('sw.js'));
+        $this->assertStringContainsString("'/offline'", $sw);
+        $this->assertStringContainsString("request.method !== 'GET'", $sw);                  // forms and Livewire updates are POSTs
+        $this->assertStringContainsString("request.mode === 'navigate'", $sw);
+        // the worker answers exactly two kinds of request: navigations (network, offline fallback) and build assets/icons
+        $this->assertSame(2, substr_count($sw, 'event.respondWith('));
+        $this->assertSame(1, substr_count($sw, 'cache.put('));                              // the only write to the cache
+        $this->assertStringContainsString("startsWith('/build/assets/')", $sw);
+    }
+
+    public function test_both_layouts_link_the_manifest_and_icons(): void
+    {
+        foreach (['/login', '/register'] as $guest) {
+            $this->get($guest)->assertOk()->assertSee('rel="manifest" href="/manifest.webmanifest"', false)
+                ->assertSee('rel="apple-touch-icon"', false)->assertSee('viewport-fit=cover', false);
+        }
+        $this->actingAs($this->user('admin'))->get('/dashboard')->assertOk()
+            ->assertSee('rel="manifest" href="/manifest.webmanifest"', false)->assertSee('apple-mobile-web-app-capable', false)
+            ->assertSee('viewport-fit=cover', false)->assertSee('x-data="pwaInstall"', false);
+    }
+
+    public function test_language_choice_is_kept_in_a_plain_cookie_and_survives_a_new_session(): void
+    {
+        $r = $this->get('/lang/en')->assertRedirect();
+        $r->assertCookie('ui_lang', 'en', false);                       // unencrypted, readable by the offline page
+
+        // a brand-new session (e.g. after logout) still starts in the chosen language
+        $this->flushSession();
+        $this->withUnencryptedCookie('ui_lang', 'en')->get('/login')->assertSee('dir="ltr"', false)->assertSee('Welcome back');
+        $this->withUnencryptedCookie('ui_lang', 'xx')->get('/login')->assertSee('dir="rtl"', false);   // junk falls back to Arabic
+    }
 }

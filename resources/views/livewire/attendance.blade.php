@@ -36,7 +36,7 @@
     @endforelse
 
     @if ($students->isNotEmpty())
-        <div class="no-print fixed inset-x-0 bottom-0 z-10 border-t border-slate-200 bg-surface/90 px-4 py-3 backdrop-blur lg:start-72">
+        <div class="no-print fixed inset-x-0 bottom-0 z-10 border-t border-slate-200 bg-surface/90 px-4 pt-3 pb-[max(.75rem,env(safe-area-inset-bottom))] backdrop-blur lg:start-72">
             <div class="mx-auto flex max-w-7xl items-center justify-between gap-3">
                 <span class="hidden text-sm text-slate-500 sm:block">{{ __('Parents of absent students are notified when you save.') }}</span>
                 <button class="btn-primary ms-auto" wire:click="save" wire:loading.attr="disabled"><x-icon name="check" class="h-4 w-4" /> {{ __('Save attendance') }}</button>

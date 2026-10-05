@@ -41,6 +41,6 @@ class WebAuthController extends Controller
         abort_unless(in_array($locale, SetLocale::SUPPORTED, true), 404);
         $request->session()->put('locale', $locale);
 
-        return back();
+        return back()->withCookie(cookie('ui_lang', $locale, 60 * 24 * 365, '/', null, null, false, false, 'lax'));
     }
 }

@@ -17,6 +17,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->trustProxies(at: $proxies === '*' ? '*' : ($proxies ? array_map('trim', explode(',', $proxies)) : null));
         $middleware->web(append: [\App\Http\Middleware\SetLocale::class]);
         $middleware->redirectGuestsTo('/login');
+        // The UI language is also kept in a plain cookie so the static offline page can read it.
+        $middleware->encryptCookies(except: ['ui_lang']);
         $middleware->alias(['role' => \App\Http\Middleware\EnsureRole::class]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

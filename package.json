@@ -3,7 +3,8 @@
     "type": "module",
     "scripts": {
         "build": "vite build",
-        "dev": "vite"
+        "dev": "vite",
+        "icons": "node scripts/make-icons.mjs"
     },
     "devDependencies": {
         "autoprefixer": "^10.4.20",
@@ -11,6 +12,7 @@
         "concurrently": "^9.0.1",
         "laravel-vite-plugin": "^1.2.0",
         "postcss": "^8.4.47",
+        "sharp": "^0.35.5",
         "tailwindcss": "^3.4.13",
         "vite": "^6.0.11"
     },

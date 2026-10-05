@@ -4,8 +4,9 @@
 <html lang="{{ app()->getLocale() }}" dir="{{ $rtl ? 'rtl' : 'ltr' }}">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#0B2327">
+    <x-pwa-head />
     <title>{{ $title ?? config('school.name') }} – {{ config('school.name') }}</title>
     <script>(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark')}catch(e){}})()</script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -64,6 +65,7 @@
         <div class="relative flex items-center justify-between p-5 sm:px-10 sm:pt-8">
             <a href="{{ route('login') }}" class="flex items-center gap-2 lg:invisible"><x-emblem class="h-8 w-8 text-brand-600" /><span class="font-display text-lg font-bold">{{ config('school.name') }}</span></a>
             <div class="flex items-center gap-2">
+                <x-pwa-install variant="top" />
                 <a href="{{ route('lang', $rtl ? 'en' : 'ar') }}" class="btn-ghost !px-3">{{ $rtl ? 'English' : 'العربية' }}</a>
                 <button class="btn-ghost !px-2.5" x-data="{ dark: document.documentElement.classList.contains('dark') }"
                         @click="dark = !dark; document.documentElement.classList.toggle('dark', dark); try { localStorage.setItem('theme', dark ? 'dark' : 'light') } catch (e) {}"
