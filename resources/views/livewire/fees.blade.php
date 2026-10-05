@@ -22,7 +22,8 @@
             <tbody>
             @forelse ($fees as $f)
                 <tr wire:key="f{{ $f->id }}">
-                    <td class="font-medium">{{ $f->title }}</td><td dir="ltr" class="text-start">{{ $f->due_date->toDateString() }}</td>
+                    <td class="font-medium">{{ $f->title }}
+                        @foreach ($f->payments as $pay)<a class="ms-2 text-xs text-indigo-600 hover:underline" target="_blank" href="{{ route('receipt', $pay) }}" title="{{ $pay->paid_at->format('Y-m-d') }}">🧾 {{ number_format((float) $pay->amount, 0) }}</a>@endforeach</td><td dir="ltr" class="text-start">{{ $f->due_date->toDateString() }}</td>
                     <td dir="ltr" class="text-start">{{ $f->amount }}</td><td dir="ltr" class="text-start">{{ $f->paid }}</td><td dir="ltr" class="text-start font-bold">{{ $f->balance }}</td>
                     <td><x-status-badge :status="$f->status" /></td>
                     @if ($staff)<td class="text-end">@if ((float) $f->balance > 0)<button class="btn-ghost" wire:click="startPay({{ $f->id }})">{{ __('Receive payment') }}</button>@endif</td>@endif

@@ -9,7 +9,7 @@ use Livewire\Component;
 
 class Dashboard extends Component
 {
-    public function render()
+    public function render(\App\Services\ReportService $reports)
     {
         $user = auth()->user();
         $today = today()->toDateString();
@@ -30,7 +30,11 @@ class Dashboard extends Component
             ? Student::visibleTo($user)->with(['schoolClass', 'attendances' => fn ($q) => $q->whereDate('date', $today)])->get()
             : collect();
 
-        return view('livewire.dashboard', compact('stats', 'children'))
+        $staff = ! $user->hasRole('parent');
+        $trend = $staff ? $reports->attendanceTrend(7) : [];
+        $collections = $user->hasRole('admin', 'accountant') ? $reports->collectionsByMonth(6) : [];
+
+        return view('livewire.dashboard', compact('stats', 'children', 'trend', 'collections'))
             ->title(__('Dashboard'));
     }
 }
