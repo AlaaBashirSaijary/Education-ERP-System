@@ -46,3 +46,15 @@ GitHub Pages لا يشغّل PHP، لذلك تُجرَّب النسخة الحي
 4. الحسابات التجريبية تظهر في الطرفية (المدير `admin@school.test` / `change-me-now`).
 
 الرسائل لأولياء الأمور تُسجَّل في «رسائل أولياء الأمور» ولا تُرسل فعلياً (`MESSAGING_CHANNEL=log`). الاستهلاك ضمن حصة Codespaces المجانية لحسابك، وأوقف الـ Codespace بعد التجربة.
+
+### بديل مجاني: التشغيل على جهازك (macOS / Linux)
+إن وصل حسابك إلى حد إنفاق Codespaces، شغّل النسخة التجريبية محلياً. يلزم PHP 8.3 وComposer وNode 22:
+```bash
+brew install php@8.3 composer node     # macOS؛ أو استخدم Laravel Herd الذي يثبّت PHP وComposer
+git clone -b claude/zen-cray-qms4d9 https://github.com/AlaaBashirSaijary/Education-ERP-System.git
+cd Education-ERP-System
+bash .devcontainer/setup.sh            # يثبّت الحزم، يبني الواجهة، ويحمّل البيانات التجريبية (SQLite)
+php artisan serve                      # ثم افتح http://localhost:8000
+php artisan queue:work                 # في طرفية ثانية، لتظهر رسائل الأهل كمرسَلة
+```
+الحسابات: `admin@school.test` / `change-me-now`، و`teacher@` و`accountant@` و`parent@school.test` / `password`.
