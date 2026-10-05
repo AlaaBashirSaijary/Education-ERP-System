@@ -31,6 +31,11 @@ class Profile extends Component
 
     public function changePassword(): void
     {
+        if (auth()->user()->isDemoAccount()) {
+            $this->addError('current_password', __('This is a shared demo account; its password cannot be changed.'));
+
+            return;
+        }
         $d = $this->validate([
             'current_password' => 'required|string',
             'password' => 'required|string|min:8|max:100|confirmed',

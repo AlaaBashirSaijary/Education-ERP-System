@@ -1,0 +1,5 @@
+# Automatic HTTPS for the domain in $DOMAIN, proxied to the Laravel container.
+{$DOMAIN} {
+	encode zstd gzip
+	reverse_proxy app:80
+}

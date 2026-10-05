@@ -17,7 +17,8 @@ class ParentNotifier
             return null;
         }
 
-        $channel = config('messaging.channel');
+        // A public demo must never message real phone numbers, whatever the environment says.
+        $channel = config('school.demo_mode') ? 'log' : config('messaging.channel');
 
         $log = NotificationLog::create([
             'student_id' => $student->id,

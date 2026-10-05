@@ -1,0 +1,42 @@
+# Render Blueprint: a public TRIAL of the school system (SCHOOL_DEMO_MODE). See docs/DEMO.md.
+# Never point this at a database that holds real school data: demo mode wipes it on a schedule.
+databases:
+  - name: school-demo-db
+    plan: free
+    databaseName: school
+    user: school
+
+services:
+  - type: web
+    name: school-demo
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    healthCheckPath: /up
+    envVars:
+      - key: SCHOOL_DEMO_MODE
+        value: "true"
+      - key: SCHOOL_NAME
+        value: "مدرستنا"            # your product / brand name, shown everywhere
+      - key: DEMO_RESET_HOURS
+        value: "6"
+      - key: DEMO_WHATSAPP
+        sync: false                 # e.g. 962791234567 (asked when you create the blueprint)
+      - key: DEMO_EMAIL
+        sync: false
+      - key: APP_URL
+        sync: false                 # https://<your-service>.onrender.com (or your own domain)
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_URL
+        fromDatabase:
+          name: school-demo-db
+          property: connectionString
+      - key: SESSION_DRIVER
+        value: database
+      - key: QUEUE_CONNECTION
+        value: database
+      - key: CACHE_STORE
+        value: database
+      - key: MESSAGING_CHANNEL
+        value: log

@@ -10,6 +10,15 @@ Route::view('offline', 'offline')->name('offline');
 
 Route::get('lang/{locale}', [WebAuthController::class, 'lang'])->name('lang');
 
+// Landing page (demo mode) or straight to the app.
+Route::get('/', function () {
+    return auth()->check() ? redirect()->route('dashboard')
+        : (config('school.demo_mode') ? view('landing') : redirect()->route('login'));
+})->name('home');
+
+// Demo mode only: one-click sign-in (the controller 404s otherwise).
+Route::post('demo/login/{role}', [\App\Http\Controllers\DemoController::class, 'login'])->middleware('throttle:30,1')->name('demo.login');
+
 Route::middleware('guest')->group(function () {
     Route::get('login', [WebAuthController::class, 'show'])->name('login');
     Route::post('login', [WebAuthController::class, 'login'])->middleware('throttle:10,1')->name('login.attempt');
@@ -25,7 +34,6 @@ Route::middleware('guest')->group(function () {
 
 Route::middleware('auth')->group(function () {
     Route::post('logout', [WebAuthController::class, 'logout'])->name('logout');
-    Route::redirect('/', '/dashboard');
 
     // Which academic year the pages show; stored in the session, defaults to the current year.
     Route::post('year/{year}', function (\Illuminate\Http\Request $request, \App\Models\AcademicYear $year) {

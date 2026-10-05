@@ -17,6 +17,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
+            $table->dropIndex(['role']); // the column is indexed; SQLite cannot drop an indexed column
             $table->dropColumn(['role', 'phone']);
         });
     }

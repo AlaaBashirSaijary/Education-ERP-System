@@ -52,6 +52,13 @@ class Users extends Component
 
     public function save(): void
     {
+        if ($this->editingId && User::find($this->editingId)?->isDemoAccount()) {
+            session()->flash('warn', __('Demo accounts are shared by all visitors and cannot be edited.'));
+            $this->resetForm();
+
+            return;
+        }
+
         $d = $this->validate([
             'name' => 'required|string|max:120',
             'email' => ['required', 'email', Rule::unique('users', 'email')->ignore($this->editingId)],
@@ -81,6 +88,11 @@ class Users extends Component
     {
         if ($id === auth()->id()) {
             session()->flash('warn', __('You cannot delete your own account.'));
+
+            return;
+        }
+        if (User::find($id)?->isDemoAccount()) {
+            session()->flash('warn', __('Demo accounts are shared by all visitors and cannot be deleted.'));
 
             return;
         }

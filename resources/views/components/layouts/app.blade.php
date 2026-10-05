@@ -100,6 +100,12 @@
     <div x-show="open" x-cloak @click="open = false" class="fixed inset-0 z-30 bg-black/50 backdrop-blur-sm lg:hidden"></div>
 
     <div class="flex min-w-0 flex-1 flex-col">
+        @if (\App\Support\Demo::on())
+            <div class="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 bg-saffron px-4 py-2 text-center text-sm font-semibold text-[#1c1300]">
+                <span>{{ __('Demo version: all data is fictional and resets every :h hours. Please do not enter real student data.', ['h' => config('school.demo_reset_hours')]) }}</span>
+                @if ($contact = \App\Support\Demo::contactUrl())<a href="{{ $contact }}" target="_blank" rel="noopener" class="underline">{{ __('Talk to us') }}</a>@endif
+            </div>
+        @endif
         <div x-data="{ off: !navigator.onLine }" @online.window="off = false" @offline.window="off = true" x-show="off" x-cloak
              class="flex items-center justify-center gap-2 bg-amber-500 px-4 py-2 pt-[max(.5rem,env(safe-area-inset-top))] text-sm font-semibold text-[#1c1300]" role="status">
             <x-icon name="info" class="h-4 w-4" /> {{ __('You are offline. Changes cannot be saved until you reconnect.') }}

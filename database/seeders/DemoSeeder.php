@@ -23,16 +23,22 @@ class DemoSeeder extends Seeder
 {
     public function run(): void
     {
-        abort_if(app()->isProduction(), 1, 'DemoSeeder creates accounts with a known password; never run it in production.');
+        // Demo accounts are shared, so outside demo mode this must not reach production.
+        abort_if(app()->isProduction() && ! config('school.demo_mode'), 1, 'DemoSeeder is for local use or SCHOOL_DEMO_MODE only; never run it on real data.');
         mt_srand(42); // deterministic demo data
-        $this->call(DatabaseSeeder::class);
+
+        // In public demo mode the password is random (visitors enter with one click); locally it is a known one.
+        $password = config('school.demo_mode') ? \Illuminate\Support\Str::random(32) : 'password';
+        User::firstOrCreate(['email' => 'admin@school.test'], [
+            'name' => 'Admin', 'role' => 'admin', 'password' => config('school.demo_mode') ? $password : 'change-me-now',
+        ]);
 
         $users = [
             ['teacher1', 'teacher', 'أ. هدى السالم'], ['teacher2', 'teacher', 'أ. خالد المصري'], ['teacher3', 'teacher', 'أ. رنا الحداد'],
             ['accountant', 'accountant', 'المحاسب سامر'], ['parent', 'parent', 'أحمد الخطيب'],
         ];
         foreach ($users as $i => [$handle, $role, $name]) {
-            User::firstOrCreate(['email' => "$handle@school.test"], ['name' => $name, 'role' => $role, 'password' => 'password', 'phone' => '+96279000'.str_pad($i, 4, '0', STR_PAD_LEFT)]);
+            User::firstOrCreate(['email' => "$handle@school.test"], ['name' => $name, 'role' => $role, 'password' => $password, 'phone' => '+96279000'.str_pad($i, 4, '0', STR_PAD_LEFT)]);
         }
         // Short aliases used in the README.
         User::where('email', 'teacher1@school.test')->update(['email' => 'teacher@school.test']);

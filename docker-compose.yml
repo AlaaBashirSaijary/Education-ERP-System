@@ -1,0 +1,58 @@
+# A public trial (or a small production install) on any VPS: app + PostgreSQL + Caddy (automatic HTTPS).
+#   cp .env.demo.example .env.demo   # edit it, then:
+#   docker compose --env-file .env.demo up -d --build
+# DNS: point DOMAIN's A record at the server first so Caddy can get a certificate.
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    env_file: .env.demo
+    environment:
+      PORT: "80"
+      DB_CONNECTION: pgsql
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_DATABASE: school
+      DB_USERNAME: school
+      DB_PASSWORD: ${DB_PASSWORD}
+      SESSION_DRIVER: database
+      QUEUE_CONNECTION: database
+      CACHE_STORE: database
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: school
+      POSTGRES_USER: school
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U school -d school"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:

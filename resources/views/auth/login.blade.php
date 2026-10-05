@@ -12,7 +12,16 @@
         <button class="btn-primary w-full !py-3 text-base">{{ __('Sign in') }} <x-icon name="arrow" class="h-4 w-4 rtl:-scale-x-100" /></button>
     </form>
 
-    @if (config('school.demo_logins'))
+    @if (config('school.demo_mode'))
+        <div class="mt-7 rounded-2xl border border-dashed border-brand-300 bg-brand-50/60 p-4">
+            <div class="mb-3 flex items-center gap-2 text-xs font-semibold text-slate-600"><x-icon name="info" class="h-4 w-4" /> {{ __('Try the demo: enter with one click') }}</div>
+            <div class="grid grid-cols-2 gap-2">
+                @foreach (['admin', 'teacher', 'accountant', 'parent'] as $role)
+                    <form method="POST" action="{{ route('demo.login', $role) }}">@csrf<button class="btn-ghost btn-sm w-full">{{ __('role.'.$role) }}</button></form>
+                @endforeach
+            </div>
+        </div>
+    @elseif (config('school.demo_logins'))
         <div class="mt-7 rounded-2xl border border-dashed border-slate-300 p-4" x-data>
             <div class="mb-3 flex items-center gap-2 text-xs font-semibold text-slate-500"><x-icon name="info" class="h-4 w-4" /> {{ __('Demo accounts: tap to fill the form') }}</div>
             <div class="grid grid-cols-2 gap-2">

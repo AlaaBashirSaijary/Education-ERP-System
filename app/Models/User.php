@@ -57,6 +57,12 @@ class User extends Authenticatable
         return $query->whereIn('role', self::STAFF_ROLES);
     }
 
+    /** Seeded demo accounts (…@school.test) are shared by every visitor, so in demo mode they are read-only. */
+    public function isDemoAccount(): bool
+    {
+        return config('school.demo_mode') && str_ends_with((string) $this->email, '@school.test');
+    }
+
     public function isStaff(): bool
     {
         return in_array($this->role, self::STAFF_ROLES, true);
