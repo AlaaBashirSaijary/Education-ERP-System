@@ -96,4 +96,4 @@ php artisan migrate              # يضيف الأعوام الدراسية وي
 **تغيير الأيقونة:** عدّل ألوان وشكل الشعار في `scripts/make-icons.mjs` ثم `npm run icons`، أو استبدل الملفات في `public/icons/` و`public/apple-touch-icon.png`. بعد تغيير `public/sw.js` أو صفحة `/offline` ارفع الرقم `VERSION` داخل `sw.js` ليحدّث الأجهزة.
 
 ## عرض تجريبي لمدير مدرسة
-لرفع نسخة عامة يجرّبها مدير المدرسة بنقرة واحدة قبل الشراء (صفحة تعريفية، دخول بكل دور، بيانات وهمية تُعاد تهيئتها تلقائياً، لا رسائل حقيقية): انظر **`docs/DEMO.md`**. يوجد `render.yaml` للنشر على Render و`docker-compose.yml` لخادم VPS مع HTTPS تلقائي.
+لرفع نسخة عامة يجرّبها مدير المدرسة بنقرة واحدة قبل الشراء (صفحة تعريفية، دخول بكل دور، بيانات وهمية تُعاد تهيئتها تلقائياً، لا رسائل حقيقية): انظر **`docs/DEMO.md`**. أسرع طريقة بلا استضافة ولا بطاقة: `DEMO_WHATSAPP=9627XXXXXXXX bash scripts/share-demo.sh` (رابط عام مؤقت من جهازك). يوجد `render.yaml` للنشر على Render و`docker-compose.yml` لخادم VPS مع HTTPS تلقائي.
