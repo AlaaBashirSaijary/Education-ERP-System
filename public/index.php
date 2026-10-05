@@ -2,6 +2,9 @@
 
 use Illuminate\Http\Request;
 
+// PHP 8.5 deprecates constants that Laravel 11's own config still uses; hide those notices so they cannot leak into pages.
+error_reporting(E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED);
+
 define('LARAVEL_START', microtime(true));
 
 // Determine if the application is in maintenance mode...
