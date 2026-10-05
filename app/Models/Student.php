@@ -11,17 +11,28 @@ class Student extends Model
 {
     protected $fillable = [
         'student_no', 'name', 'school_class_id', 'parent_id', 'parent_phone',
-        'qr_token', 'fingerprint_id', 'active',
+        'qr_token', 'fingerprint_id', 'active', 'graduated_at',
     ];
 
     protected $hidden = ['qr_token'];
 
-    protected $casts = ['active' => 'boolean'];
+    protected $casts = ['active' => 'boolean', 'graduated_at' => 'date'];
 
     protected static function booted(): void
     {
         static::creating(function (Student $s) {
             $s->qr_token ??= Str::random(48);
+        });
+
+        // Keep the class history for the current year in step with students.school_class_id.
+        static::saved(function (Student $s) {
+            $year = app(\App\Support\Years::class)->current();
+            if ($year && ($s->wasRecentlyCreated || $s->wasChanged('school_class_id'))) {
+                Enrollment::updateOrCreate(
+                    ['student_id' => $s->id, 'academic_year_id' => $year->id],
+                    ['school_class_id' => $s->school_class_id]
+                );
+            }
         });
     }
 
@@ -29,6 +40,19 @@ class Student extends Model
     public function scopeVisibleTo($query, User $user)
     {
         return $user->hasRole('parent') ? $query->where('parent_id', $user->id) : $query;
+    }
+
+    public function enrollments(): HasMany
+    {
+        return $this->hasMany(Enrollment::class);
+    }
+
+    /** Students enrolled in a class during a year (class history, not just the current class). */
+    public function scopeEnrolledIn($query, ?int $classId, ?int $yearId)
+    {
+        return $query->whereHas('enrollments', fn ($e) => $e
+            ->when($classId, fn ($q) => $q->where('school_class_id', $classId))
+            ->when($yearId, fn ($q) => $q->where('academic_year_id', $yearId)));
     }
 
     public function schoolClass(): BelongsTo

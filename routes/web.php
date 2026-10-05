@@ -15,8 +15,16 @@ Route::middleware('auth')->group(function () {
     Route::post('logout', [WebAuthController::class, 'logout'])->name('logout');
     Route::redirect('/', '/dashboard');
 
+    // Which academic year the pages show; stored in the session, defaults to the current year.
+    Route::post('year/{year}', function (\Illuminate\Http\Request $request, \App\Models\AcademicYear $year) {
+        $request->session()->put('year_id', $year->id);
+
+        return back();
+    })->name('year.switch');
+
     Route::get('dashboard', Livewire\Dashboard::class)->name('dashboard');
     Route::get('students', Livewire\Students::class)->name('students');
+    Route::get('students/{student}', Livewire\StudentProfile::class)->whereNumber('student')->name('student-profile');
     Route::get('students/{student}/report-card', Livewire\ReportCard::class)->name('report-card');
     Route::get('fees', Livewire\Fees::class)->name('fees')->middleware('role:admin,accountant,parent');
     Route::get('timetable', Livewire\Timetable::class)->name('timetable')->middleware('role:admin,teacher,parent');
@@ -42,6 +50,7 @@ Route::middleware('auth')->group(function () {
         Route::get('messages', Livewire\Messages::class)->name('messages');
         Route::get('users', Livewire\Users::class)->name('users');
         Route::get('setup', Livewire\Setup::class)->name('setup');
+        Route::get('years', Livewire\Years::class)->name('years');
         Route::get('students/{student}/card', [\App\Http\Controllers\RosterController::class, 'card'])->name('student-card');
     });
 });

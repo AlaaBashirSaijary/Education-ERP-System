@@ -3,10 +3,11 @@
         $tot = ['billed' => $rows->sum('billed'), 'collected' => $rows->sum('collected'), 'outstanding' => $rows->sum('outstanding'), 'overdue' => $rows->sum('overdue')];
         $max = max(1, max($monthly) ?: 1);
     @endphp
-    <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        @foreach ([['Billed', 'billed', 'text-slate-800'], ['Collected', 'collected', 'text-emerald-600'], ['Outstanding', 'outstanding', 'text-amber-600'], ['Overdue', 'overdue', 'text-rose-600']] as [$l, $k, $c])
-            <div class="card"><div class="text-sm text-slate-500">{{ __($l) }}</div><div class="mt-1 text-2xl font-bold {{ $c }}">{{ number_format($tot[$k], 2) }}</div></div>
-        @endforeach
+    <div class="stagger grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+        <x-stat :label="__('Billed')" :value="number_format($tot['billed'], 2)" icon="fees" tone="brand" :note="$year?->name" />
+        <x-stat :label="__('Collected')" :value="number_format($tot['collected'], 2)" icon="check" tone="ok" />
+        <x-stat :label="__('Outstanding')" :value="number_format($tot['outstanding'], 2)" icon="reports" tone="warn" />
+        <x-stat :label="__('Overdue')" :value="number_format($tot['overdue'], 2)" icon="announce" tone="bad" />
     </div>
 
     <div class="card">
@@ -15,7 +16,7 @@
             @foreach ($monthly as $m => $v)
                 <div class="flex flex-1 flex-col items-stretch justify-end gap-1" title="{{ $m }}: {{ number_format($v, 2) }}">
                     <span class="text-center text-xs text-slate-500" dir="ltr">{{ $v ? number_format($v, 0) : '' }}</span>
-                    <div class="w-full rounded-t bg-indigo-500" style="height: {{ max(2, $v / $max * 100) }}%"></div>
+                    <div class="w-full rounded-t bg-gradient-to-t from-brand-600 to-brand-400" style="height: {{ max(2, $v / $max * 100) }}%"></div>
                     <span class="text-center text-xs text-slate-400" dir="ltr">{{ substr($m, 2) }}</span>
                 </div>
             @endforeach

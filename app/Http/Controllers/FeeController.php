@@ -41,7 +41,7 @@ class FeeController extends Controller
     {
         $this->authorizeStudent($request, $student);
 
-        $fees = $student->fees()->with('payments')->orderBy('due_date')->get();
+        $fees = $student->fees()->where('academic_year_id', app(\App\Support\Years::class)->selected()?->id)->with('payments')->orderBy('due_date')->get();
 
         return [
             'fees' => $fees,

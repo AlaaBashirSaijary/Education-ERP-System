@@ -40,7 +40,7 @@ class Setup extends Component
     {
         $class = SchoolClass::withCount('students')->findOrFail($id);
         // Deleting a class would cascade-delete its students, so refuse instead.
-        if ($class->students_count > 0) {
+        if ($class->students_count > 0 || \App\Models\Enrollment::where('school_class_id', $id)->exists()) {
             session()->flash('warn', __('Move or delete the students of this class first.'));
 
             return;

@@ -27,7 +27,7 @@
     <div class="table-wrap"><table class="tbl">
         <thead><tr><th>{{ __('Name') }}</th><th>{{ __('Email') }}</th><th>{{ __('Phone') }}</th><th>{{ __('Role') }}</th><th></th></tr></thead>
         <tbody>@foreach ($users as $u)
-            <tr wire:key="u{{ $u->id }}"><td class="font-medium">{{ $u->name }}</td><td dir="ltr" class="text-start">{{ $u->email }}</td>
+            <tr wire:key="u{{ $u->id }}"><td><span class="flex items-center gap-3"><x-avatar :name="$u->name" size="h-8 w-8 text-xs" /><span class="font-semibold">{{ $u->name }}</span></span></td><td dir="ltr" class="text-start">{{ $u->email }}</td>
                 <td dir="ltr" class="text-start">{{ $u->phone ?: '—' }}</td><td><span class="badge-slate">{{ __('role.'.$u->role) }}</span></td>
                 <td class="space-x-3 text-end rtl:space-x-reverse">
                     <button class="text-slate-600 hover:underline" wire:click="edit({{ $u->id }})">{{ __('Edit') }}</button>

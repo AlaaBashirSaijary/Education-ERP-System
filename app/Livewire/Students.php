@@ -6,6 +6,7 @@ use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\User;
 use Illuminate\Validation\Rule;
+use App\Support\Years;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -105,14 +106,18 @@ class Students extends Component
 
     public function render()
     {
-        $students = Student::visibleTo(auth()->user())->with(['schoolClass', 'parent'])
-            ->when($this->classFilter, fn ($q, $c) => $q->where('school_class_id', $c))
+        $year = app(Years::class)->selected();
+        $students = Student::visibleTo(auth()->user())
+            ->with(['parent', 'schoolClass', 'enrollments' => fn ($q) => $q->where('academic_year_id', $year?->id)->with('schoolClass')])
+            ->enrolledIn($this->classFilter, $year?->id)
             ->when($this->search, fn ($q) => $q->where(fn ($w) => $w
                 ->where('name', 'like', "%{$this->search}%")->orWhere('student_no', 'like', "%{$this->search}%")))
             ->orderBy('name')->paginate(15);
 
         return view('livewire.students', [
             'students' => $students,
+            'year' => $year,
+            'isCurrent' => app(Years::class)->isViewingCurrent(),
             'classes' => SchoolClass::orderBy('name')->orderBy('section')->get(),
             'parents' => auth()->user()->hasRole('admin') ? User::where('role', 'parent')->orderBy('name')->get(['id', 'name', 'email']) : collect(),
         ])->title(__('Students'));

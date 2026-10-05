@@ -12,6 +12,7 @@ class Gate extends Component
     /** @var list<array{name:string,status:string,time:string,duplicate:bool}> */
     public array $recent = [];
     public ?string $error = null;
+    public int $scans = 0;
 
     public function scan(?string $scanned = null): void
     {
@@ -29,6 +30,7 @@ class Gate extends Component
             : $service->scan($code, null, auth()->user());
 
         if (! $result) {
+            $this->scans++;
             $this->error = __('Unknown student.');
             $this->dispatch('scanned', ok: false);
 
@@ -42,6 +44,7 @@ class Gate extends Component
             'duplicate' => $result['duplicate'],
         ]);
         $this->recent = array_slice($this->recent, 0, 12);
+        $this->scans++;
         $this->dispatch('scanned', ok: true);
     }
 

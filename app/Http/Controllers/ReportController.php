@@ -22,7 +22,7 @@ class ReportController extends Controller
     {
         return $this->csv('finance-by-class.csv',
             [__('Class'), __('Billed'), __('Collected'), __('Outstanding'), __('Overdue')],
-            $reports->financeByClass()->map(fn ($r) => [$r['class'], $r['billed'], $r['collected'], $r['outstanding'], $r['overdue']])->all());
+            $reports->financeByClass(app(\App\Support\Years::class)->selected()?->id)->map(fn ($r) => [$r['class'], $r['billed'], $r['collected'], $r['outstanding'], $r['overdue']])->all());
     }
 
     public function receipt(Request $request, Payment $payment)

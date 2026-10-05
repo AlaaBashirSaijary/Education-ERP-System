@@ -11,7 +11,7 @@ php artisan migrate --seed          # admin@school.test / change-me-now
 php artisan queue:work              # لإرسال الإشعارات
 php artisan schedule:work           # إغلاق اليوم + تذكير الأقساط
 php artisan db:seed --class=DemoSeeder   # اختياري: بيانات تجريبية (teacher@/accountant@/parent@school.test، كلمة المرور password)
-php artisan test
+php artisan test                          # يعمل على قاعدة في الذاكرة ولا يمس بياناتك
 ```
 الواجهة على `/` — عربية (RTL) افتراضياً مع زر 🌐 للتبديل إلى الإنجليزية (LTR). الترجمة في `lang/ar.json`.
 
@@ -58,3 +58,15 @@ php artisan serve                      # ثم افتح http://localhost:8000
 php artisan queue:work                 # في طرفية ثانية، لتظهر رسائل الأهل كمرسَلة
 ```
 الحسابات: `admin@school.test` / `change-me-now`، و`teacher@` و`accountant@` و`parent@school.test` / `password`.
+
+## تحديث نسخة موجودة
+```bash
+git pull
+composer install
+npm ci && npm run build          # الخطوط مضمّنة الآن في الحزمة
+php artisan migrate              # يضيف الأعوام الدراسية ويضع بياناتك الحالية في العام الحالي
+# للبيانات التجريبية الجديدة (يمسح قاعدة التجربة): php artisan migrate:fresh --seed --seeder=DemoSeeder
+```
+
+## العام الدراسي
+صفحة «الأعوام الدراسية» (للمدير): إنشاء عام وفصليه، اعتماده كعام حالي، **ترحيل الطلاب** إلى الصفوف التالية أو تخريجهم. مبدّل العام في الشريط العلوي يغيّر ما تعرضه صفحات العلامات والأقساط والشهادة والتقارير، وما تنشئه أثناء عرض عام سابق يُنسب إليه. التفاصيل في `docs/DATABASE.md`.

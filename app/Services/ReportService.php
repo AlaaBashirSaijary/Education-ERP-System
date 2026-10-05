@@ -48,16 +48,19 @@ class ReportService
      *
      * @return Collection<int, array{class:string,billed:float,collected:float,outstanding:float,overdue:float}>
      */
-    public function financeByClass(): Collection
+    public function financeByClass(?int $yearId = null): Collection
     {
         $paid = DB::table('payments')->selectRaw('fee_id, sum(amount) as paid')->groupBy('fee_id');
 
+        // Class = the one the student attended in the fee's year (falls back to their current class).
         $rows = DB::table('fees')
             ->join('students', 'students.id', '=', 'fees.student_id')
+            ->leftJoin('enrollments as e', fn ($j) => $j->on('e.student_id', '=', 'fees.student_id')->on('e.academic_year_id', '=', 'fees.academic_year_id'))
             ->leftJoinSub($paid, 'p', 'p.fee_id', '=', 'fees.id')
-            ->selectRaw('students.school_class_id as class_id, sum(fees.amount) as billed, sum(coalesce(p.paid,0)) as collected, '
+            ->when($yearId, fn ($q) => $q->where('fees.academic_year_id', $yearId))
+            ->selectRaw('coalesce(e.school_class_id, students.school_class_id) as class_id, sum(fees.amount) as billed, sum(coalesce(p.paid,0)) as collected, '
                 .'sum(case when fees.due_date < ? and fees.amount - coalesce(p.paid,0) > 0 then fees.amount - coalesce(p.paid,0) else 0 end) as overdue', [today()->toDateString()])
-            ->groupBy('students.school_class_id')->get()->keyBy('class_id');
+            ->groupBy(DB::raw('coalesce(e.school_class_id, students.school_class_id)'))->get()->keyBy('class_id');
 
         return SchoolClass::orderBy('name')->orderBy('section')->get()->map(function (SchoolClass $c) use ($rows) {
             $r = $rows->get($c->id);

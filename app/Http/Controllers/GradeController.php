@@ -32,7 +32,7 @@ class GradeController extends Controller
             'marks.*.mark' => "required|numeric|min:0|max:{$exam->max_mark}",
         ]);
 
-        $inClass = Student::where('school_class_id', $exam->school_class_id)
+        $inClass = Student::enrolledIn($exam->school_class_id, $exam->academic_year_id)
             ->whereIn('id', array_column($data['marks'], 'student_id'))->pluck('id')->all();
 
         abort_if(count($inClass) !== count(array_unique(array_column($data['marks'], 'student_id'))),
@@ -49,7 +49,8 @@ class GradeController extends Controller
     {
         $this->authorizeStudent($request, $student);
 
-        $marks = $student->marks()->with('exam.subject')->get();
+        $yearId = app(\App\Support\Years::class)->selected()?->id;
+        $marks = $student->marks()->whereHas('exam', fn ($q) => $q->where('academic_year_id', $yearId))->with('exam.subject')->get();
 
         $subjects = $marks->groupBy(fn ($m) => $m->exam->subject->name)->map(fn ($rows, $name) => [
             'subject' => $name,

@@ -4,11 +4,13 @@ namespace App\Livewire;
 
 use App\Models\Student;
 use App\Services\Messaging\ParentNotifier;
+use App\Support\Years;
 use Livewire\Component;
 
 class ReportCard extends Component
 {
     public Student $student;
+    public ?int $termId = null;
 
     public function mount(Student $student): void
     {
@@ -18,7 +20,10 @@ class ReportCard extends Component
 
     private function card(): array
     {
-        $marks = $this->student->marks()->with('exam.subject')->get();
+        $year = app(Years::class)->selected();
+        $marks = $this->student->marks()
+            ->whereHas('exam', fn ($q) => $q->where('academic_year_id', $year?->id)->when($this->termId, fn ($t, $id) => $t->where('term_id', $id)))
+            ->with('exam.subject')->get();
         $subjects = $marks->groupBy(fn ($m) => $m->exam->subject->name)->map(fn ($rows, $name) => [
             'subject' => $name,
             'percentage' => round($rows->sum('mark') / $rows->sum(fn ($m) => $m->exam->max_mark) * 100, 1),
@@ -29,7 +34,13 @@ class ReportCard extends Component
         return [
             'subjects' => $subjects,
             'overall' => $max ? round($marks->sum('mark') / $max * 100, 1) : null,
-            'attendance' => $this->student->attendances()->selectRaw('status, count(*) as days')->groupBy('status')->pluck('days', 'status'),
+            'attendance' => $this->student->attendances()
+                ->when($year, fn ($q) => $q->whereBetween('date', [$year->starts_on->toDateString(), $year->ends_on->toDateString()]))
+                ->selectRaw('status, count(*) as days')->groupBy('status')->pluck('days', 'status'),
+            'year' => $year,
+            'terms' => $year?->terms ?? collect(),
+            'enrollment' => $this->student->enrollments()->where('academic_year_id', $year?->id)->with('schoolClass')->first(),
+            'history' => $this->student->enrollments()->with(['academicYear', 'schoolClass'])->get()->sortByDesc(fn ($e) => $e->academicYear->starts_on),
         ];
     }
 

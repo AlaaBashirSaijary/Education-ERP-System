@@ -7,6 +7,7 @@ use App\Models\Student;
 use App\Services\FeeService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use App\Support\Years;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
@@ -95,14 +96,15 @@ class Fees extends Component
         $students = Student::visibleTo($user)->orderBy('name')->get(['id', 'name']);
         abort_if($this->studentId && ! $students->contains('id', $this->studentId), 403);
 
+        $year = app(Years::class)->selected();
         $fees = $this->studentId
-            ? Fee::with('payments')->where('student_id', $this->studentId)->orderBy('due_date')->get() : collect();
+            ? Fee::with('payments')->where('student_id', $this->studentId)->where('academic_year_id', $year?->id)->orderBy('due_date')->get() : collect();
 
         $overdue = $this->tab === 'overdue' && $user->hasRole('admin', 'accountant')
-            ? Fee::with(['payments', 'student'])->where('due_date', '<', today())->orderBy('due_date')->get()
+            ? Fee::with(['payments', 'student', 'academicYear'])->where('due_date', '<', today())->orderBy('due_date')->get()
                 ->filter(fn ($f) => (float) $f->balance > 0)
             : collect();
 
-        return view('livewire.fees', compact('students', 'fees', 'overdue'))->title(__('Fees'));
+        return view('livewire.fees', compact('students', 'fees', 'overdue', 'year'))->title(__('Fees'));
     }
 }

@@ -2,7 +2,9 @@
 
 namespace Database\Seeders;
 
+use App\Models\AcademicYear;
 use App\Models\Attendance;
+use App\Models\Enrollment;
 use App\Models\Exam;
 use App\Models\Fee;
 use App\Models\Mark;
@@ -36,6 +38,11 @@ class DemoSeeder extends Seeder
         $teachers = User::where('role', 'teacher')->orderBy('id')->get();
         $parent = User::where('email', 'parent@school.test')->first();
 
+        // Fourth grade first, so class order (by id) follows grade order for the promotion wizard.
+        $fourth = [
+            SchoolClass::firstOrCreate(['name' => 'الصف الرابع', 'section' => 'أ']),
+            SchoolClass::firstOrCreate(['name' => 'الصف الرابع', 'section' => 'ب']),
+        ];
         $classes = [
             SchoolClass::firstOrCreate(['name' => 'الصف الخامس', 'section' => 'أ']),
             SchoolClass::firstOrCreate(['name' => 'الصف الخامس', 'section' => 'ب']),
@@ -48,6 +55,34 @@ class DemoSeeder extends Seeder
             'name' => $name, 'school_class_id' => $classes[$i % 2]->id, 'fingerprint_id' => (string) (1000 + $i),
             'parent_phone' => '+9627900'.(2000 + intdiv($i, 2) * 3), 'parent_id' => $i === 0 ? $parent->id : null,
         ]));
+
+        // Last year (2025/2026): the same students were in fourth grade, with marks and fully paid fees.
+        $current = AcademicYear::where('is_current', true)->first();
+        $past = AcademicYear::firstOrCreate(['name' => ($current->starts_on->year - 1).'/'.$current->starts_on->year], [
+            'starts_on' => ($current->starts_on->year - 1).'-09-01', 'ends_on' => $current->starts_on->year.'-06-30', 'is_current' => false,
+        ]);
+        if (! $past->terms()->exists()) {
+            $past->createDefaultTerms();
+        }
+        foreach ($students as $i => $s) {
+            Enrollment::firstOrCreate(['student_id' => $s->id, 'academic_year_id' => $past->id], ['school_class_id' => $fourth[$i % 2]->id]);
+            foreach (range(1, 4) as $k) {
+                $due = $past->starts_on->copy()->addMonths($k - 1)->addDays(9);
+                $fee = Fee::firstOrCreate(['student_id' => $s->id, 'academic_year_id' => $past->id, 'title' => 'القسط الدراسي ('.$k.'/4)'], ['amount' => 230, 'due_date' => $due]);
+                if (! $fee->payments()->exists()) {
+                    Payment::create(['fee_id' => $fee->id, 'amount' => 230, 'method' => 'cash', 'paid_at' => $due->copy()->subDays(2)->setTime(10, 0), 'received_by' => User::where('role', 'accountant')->value('id')]);
+                }
+            }
+        }
+        foreach ($fourth as $class) {
+            foreach ($subjects->take(3) as $subject) {
+                $exam = Exam::firstOrCreate(['name' => 'اختبار نهاية العام', 'school_class_id' => $class->id, 'subject_id' => $subject->id, 'academic_year_id' => $past->id],
+                    ['max_mark' => 50, 'date' => $past->ends_on->copy()->subDays(20), 'term_id' => $past->terms()->orderByDesc('starts_on')->value('id')]);
+                foreach (Enrollment::where('academic_year_id', $past->id)->where('school_class_id', $class->id)->pluck('student_id') as $sid) {
+                    Mark::firstOrCreate(['exam_id' => $exam->id, 'student_id' => $sid], ['mark' => mt_rand(28, 50)]);
+                }
+            }
+        }
 
         // Attendance for the last 7 days (skip Fri/Sat); today is partial so the gate has work left.
         foreach ($students as $s) {
@@ -68,7 +103,7 @@ class DemoSeeder extends Seeder
         foreach ($students as $s) {
             foreach (range(0, 3) as $k) {
                 $due = today()->startOfMonth()->subMonths(3 - $k)->addDays(9);
-                $fee = Fee::firstOrCreate(['student_id' => $s->id, 'title' => 'القسط الدراسي ('.($k + 1).'/4)'], ['amount' => 250, 'due_date' => $due]);
+                $fee = Fee::firstOrCreate(['student_id' => $s->id, 'academic_year_id' => $current->id, 'title' => 'القسط الدراسي ('.($k + 1).'/4)'], ['amount' => 250, 'due_date' => $due]);
                 $pays = $due->isPast() && mt_rand(1, 100) <= ($k < 2 ? 90 : 55);
                 if ($pays && ! $fee->payments()->exists()) {
                     Payment::create(['fee_id' => $fee->id, 'amount' => mt_rand(1, 100) <= 15 ? 150 : 250, 'method' => ['cash', 'card', 'transfer'][mt_rand(0, 2)],
@@ -81,7 +116,7 @@ class DemoSeeder extends Seeder
         foreach ($classes as $class) {
             foreach ($subjects->take(3) as $subject) {
                 $exam = Exam::firstOrCreate(['name' => 'اختبار منتصف الفصل', 'school_class_id' => $class->id, 'subject_id' => $subject->id],
-                    ['max_mark' => 50, 'date' => today()->subDays(14)]);
+                    ['max_mark' => 50, 'date' => today()->subDays(14), 'academic_year_id' => $current->id, 'term_id' => $current->terms()->value('id')]);
                 foreach ($students->where('school_class_id', $class->id) as $s) {
                     Mark::firstOrCreate(['exam_id' => $exam->id, 'student_id' => $s->id], ['mark' => mt_rand(26, 50)]);
                 }

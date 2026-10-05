@@ -1,6 +1,6 @@
 # قاعدة البيانات
 
-20 جدولاً: 10 جداول للمدرسة، وجدول `users`، و9 جداول يضيفها Laravel (الجلسات، الطوابير، الكاش، التوكنات، سجل الـ migrations).
+23 جدولاً: 13 جدولاً للمدرسة، وجدول `users`، و9 جداول يضيفها Laravel (الجلسات، الطوابير، الكاش، التوكنات، سجل الـ migrations).
 تُبنى كلها من ملفات `database/migrations/` بأمر واحد: `php artisan migrate`. اختُبر التطبيق على SQLite وPostgreSQL 16.
 
 ```mermaid
@@ -20,6 +20,13 @@ erDiagram
     fees ||--o{ payments : "paid by"
     users ||--o{ payments : "received_by"
     students |o--o{ notification_logs : "about"
+    academic_years ||--o{ terms : "has"
+    academic_years ||--o{ enrollments : "in year"
+    students ||--o{ enrollments : "class history"
+    school_classes ||--o{ enrollments : "attended"
+    academic_years |o--o{ exams : "of year"
+    terms |o--o{ exams : "of term"
+    academic_years |o--o{ fees : "of year"
 
     users {
         id id PK
@@ -44,6 +51,7 @@ erDiagram
         string fingerprint_id UK
         string parent_phone
         boolean active
+        date graduated_at
     }
     attendances {
         id id PK
@@ -87,6 +95,25 @@ erDiagram
         string type
         string status
     }
+    academic_years {
+        id id PK
+        string name UK
+        date starts_on
+        date ends_on
+        boolean is_current
+    }
+    terms {
+        id id PK
+        string name
+        date starts_on
+        date ends_on
+    }
+    enrollments {
+        id id PK
+        id student_id "unique with year"
+        id academic_year_id
+        id school_class_id
+    }
 ```
 
 ## قرارات التصميم
@@ -111,6 +138,15 @@ erDiagram
 
 ## ما ينقص القاعدة حالياً
 
-- لا يوجد مفهوم **عام دراسي / فصل**: العلامات والأقساط غير مرتبطة بسنة، فنقل الطلاب لصف جديد يخلط التاريخ. هذا أهم ما يُضاف قبل سنة دراسية ثانية.
+- **جدول الحصص** غير مرتبط بعام دراسي: يمثل الجدول الحالي فقط.
+- الحضور مرتبط بالتاريخ لا بالعام (يُحسب العام من نطاق تواريخه).
 - لا **soft delete** ولا سجل تدقيق للتعديلات والحذف.
 - مدرسة واحدة فقط (لا عمود `school_id`).
+
+## ترحيل الطلاب في نهاية العام
+من صفحة «الأعوام الدراسية ← ترحيل الطلاب»: تحدد لكل صف إلى أين ينتقل (أو «يتخرجون»)، تراجع الملخص، ثم تطبّق.
+- ينشئ سجل `enrollments` للعام الجديد ولا يغيّر سجلات العام السابق.
+- الخريجون يصبحون غير نشطين مع `graduated_at`.
+- التشغيل المتكرر آمن: من نُقل مسبقاً يُتجاوز.
+- «اعتماد كعام حالي» ينقل كل طالب إلى صفه المسجّل في ذلك العام.
+- ما يُنشأ أثناء عرض عام سابق (امتحان، قسط) يُنسب لذلك العام.
