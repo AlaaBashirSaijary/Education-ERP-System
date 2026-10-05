@@ -5,33 +5,88 @@
 
 ```mermaid
 erDiagram
-    users ||--o{ students : "parent_id (ولي الأمر)"
-    school_classes ||--o{ students : ""
-    students ||--o{ attendances : ""
+    users ||--o{ students : "parent_id"
+    school_classes ||--o{ students : "class"
+    students ||--o{ attendances : "daily"
     users ||--o{ attendances : "recorded_by"
-    school_classes ||--o{ exams : ""
-    subjects ||--o{ exams : ""
-    exams ||--o{ marks : ""
-    students ||--o{ marks : ""
-    school_classes ||--o{ timetable_entries : ""
-    subjects ||--o{ timetable_entries : ""
+    school_classes ||--o{ exams : "has"
+    subjects ||--o{ exams : "of"
+    exams ||--o{ marks : "has"
+    students ||--o{ marks : "earns"
+    school_classes ||--o{ timetable_entries : "has"
+    subjects ||--o{ timetable_entries : "of"
     users ||--o{ timetable_entries : "teacher_id"
-    students ||--o{ fees : "قسط"
-    fees ||--o{ payments : "دفعة"
+    students ||--o{ fees : "instalments"
+    fees ||--o{ payments : "paid by"
     users ||--o{ payments : "received_by"
-    students |o--o{ notification_logs : ""
+    students |o--o{ notification_logs : "about"
 
-    users { id id PK  string role "admin|teacher|accountant|parent"  string email UK  string phone }
-    school_classes { id id PK  string name  string section "UK(name,section)" }
-    subjects { id id PK  string code UK  string name }
-    students { id id PK  string student_no UK  string qr_token UK  string fingerprint_id UK  string parent_phone  bool active }
-    attendances { id id PK  date date  string status "present|late|absent"  string method "qr|fingerprint|manual" }
-    exams { id id PK  string name  int max_mark  date date }
-    marks { id id PK  decimal mark }
-    timetable_entries { id id PK  int day_of_week  int period  time starts_at  time ends_at }
-    fees { id id PK  string title  decimal amount  date due_date }
-    payments { id id PK  decimal amount  string method  timestamp paid_at }
-    notification_logs { id id PK  string phone  string channel  string type  string status }
+    users {
+        id id PK
+        string role "admin teacher accountant parent"
+        string email UK
+        string phone
+    }
+    school_classes {
+        id id PK
+        string name
+        string section "unique with name"
+    }
+    subjects {
+        id id PK
+        string code UK
+        string name
+    }
+    students {
+        id id PK
+        string student_no UK
+        string qr_token UK
+        string fingerprint_id UK
+        string parent_phone
+        boolean active
+    }
+    attendances {
+        id id PK
+        date date "unique with student"
+        string status "present late absent"
+        string method "qr fingerprint manual"
+    }
+    exams {
+        id id PK
+        string name
+        int max_mark
+        date date
+    }
+    marks {
+        id id PK
+        decimal mark "unique with exam and student"
+    }
+    timetable_entries {
+        id id PK
+        int day_of_week
+        int period
+        time starts_at
+        time ends_at
+    }
+    fees {
+        id id PK
+        string title
+        decimal amount
+        date due_date
+    }
+    payments {
+        id id PK
+        decimal amount
+        string method
+        timestamp paid_at
+    }
+    notification_logs {
+        id id PK
+        string phone
+        string channel
+        string type
+        string status
+    }
 ```
 
 ## قرارات التصميم
