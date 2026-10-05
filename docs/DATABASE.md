@@ -1,6 +1,6 @@
 # قاعدة البيانات
 
-23 جدولاً: 13 جدولاً للمدرسة، وجدول `users`، و9 جداول يضيفها Laravel (الجلسات، الطوابير، الكاش، التوكنات، سجل الـ migrations).
+24 جدولاً: 14 جدولاً للمدرسة، وجدول `users`، و9 جداول يضيفها Laravel (الجلسات، الطوابير، الكاش، التوكنات، سجل الـ migrations).
 تُبنى كلها من ملفات `database/migrations/` بأمر واحد: `php artisan migrate`. اختُبر التطبيق على SQLite وPostgreSQL 16.
 
 ```mermaid
@@ -20,6 +20,7 @@ erDiagram
     fees ||--o{ payments : "paid by"
     users ||--o{ payments : "received_by"
     students |o--o{ notification_logs : "about"
+    users ||--o{ staff_attendances : "daily"
     academic_years ||--o{ terms : "has"
     academic_years ||--o{ enrollments : "in year"
     students ||--o{ enrollments : "class history"
@@ -113,6 +114,14 @@ erDiagram
         id student_id "unique with year"
         id academic_year_id
         id school_class_id
+    }
+    staff_attendances {
+        id id PK
+        date date "unique with user"
+        string status "present late absent leave"
+        time check_in_at
+        time check_out_at
+        string method "manual self"
     }
 ```
 

@@ -212,7 +212,8 @@
     .seg .on-present { background: #1E9358; color: #fff; }
     .seg .on-late { background: #E6A100; color: #1c1300; }
     .seg .on-absent { background: #D13A3A; color: #fff; }
-    .seg label.on-present:hover, .seg label.on-late:hover, .seg label.on-absent:hover { filter: brightness(.95); }
+    .seg .on-leave { background: #4B63B8; color: #fff; }
+    .seg label.on-present:hover, .seg label.on-late:hover, .seg label.on-absent:hover, .seg label.on-leave:hover { filter: brightness(.95); }
 
     .float-a { animation: floaty 7s ease-in-out infinite; }
     .float-b { animation: floaty 8s ease-in-out -3s infinite; }

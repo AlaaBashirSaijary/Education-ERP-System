@@ -233,7 +233,7 @@ class WebUiTest extends TestCase
 
         $pages = [
             'admin' => ['/dashboard', '/students', "/students/{$student->id}", "/students/{$student->id}/report-card", '/attendance', '/gate', '/grades', '/fees',
-                '/timetable', '/reports/attendance', '/reports/finance', '/announcements', '/messages', '/users', '/setup', '/years', '/profile'],
+                '/timetable', '/reports/attendance', '/reports/finance', '/announcements', '/messages', '/users', '/setup', '/years', '/staff-attendance', '/profile'],
             'teacher' => ['/dashboard', '/students', "/students/{$student->id}", '/attendance', '/gate', '/grades', '/timetable', '/reports/attendance', '/announcements', '/profile'],
             'accountant' => ['/dashboard', '/students', '/fees', '/reports/finance', '/profile'],
             'parent' => ['/dashboard', '/students', "/students/{$student->id}", "/students/{$student->id}/report-card", '/fees', '/timetable', '/profile'],
@@ -411,5 +411,100 @@ class WebUiTest extends TestCase
         User::factory()->create(['email' => 'r@x.test', 'role' => 'admin']);
         $this->post('/login', ['email' => 'r@x.test', 'password' => 'password', 'remember' => '1'])->assertRedirect('/dashboard');
         $this->assertNotNull(User::where('email', 'r@x.test')->value('remember_token'));
+    }
+
+    /* ---------- staff attendance ---------- */
+
+    public function test_admin_records_staff_attendance_and_clearing_removes_the_record(): void
+    {
+        $admin = $this->user('admin');
+        $teacher = $this->user('teacher');
+        $acc = $this->user('accountant');
+
+        $c = Livewire::actingAs($admin)->test(Pages\StaffAttendance::class)
+            ->set("rows.{$teacher->id}.status", 'late')->set("rows.{$teacher->id}.in", '08:10')->set("rows.{$teacher->id}.out", '14:00')
+            ->set("rows.{$acc->id}.status", 'leave')->set("rows.{$acc->id}.in", '09:00')   // leave: times are ignored
+            ->call('save')->assertHasNoErrors();
+
+        $t = \App\Models\StaffAttendance::where('user_id', $teacher->id)->first();
+        $this->assertSame(['late', '08:10:00', '14:00:00'], [$t->status, $t->check_in_at, $t->check_out_at]);
+        $this->assertSame(350, $t->workedMinutes());
+        $leave = \App\Models\StaffAttendance::where('user_id', $acc->id)->first();
+        $this->assertNull($leave->check_in_at);
+        $this->assertDatabaseMissing('staff_attendances', ['user_id' => $admin->id]);   // untouched rows are not recorded
+
+        // checkout before checkin is rejected and nothing changes
+        $c->set("rows.{$teacher->id}.out", '07:00')->call('save')->assertHasErrors("rows.{$teacher->id}.out");
+        $this->assertSame('14:00:00', $t->fresh()->check_out_at);
+
+        // clearing a row deletes the record
+        $c->set("rows.{$teacher->id}.out", '14:00')->set("rows.{$teacher->id}.status", '')->call('save');
+        $this->assertDatabaseMissing('staff_attendances', ['user_id' => $teacher->id]);
+    }
+
+    public function test_staff_attendance_is_admin_only_and_parents_are_not_listed(): void
+    {
+        $this->actingAs($this->user('teacher'))->get('/staff-attendance')->assertForbidden();
+        $this->actingAs($this->user('accountant'))->get('/staff-attendance')->assertForbidden();
+        $this->actingAs($this->user('parent'))->get('/reports/staff-attendance.csv?month='.today()->format('Y-m'))->assertForbidden();
+
+        $admin = $this->user('admin');
+        User::factory()->create(['role' => 'parent', 'name' => 'Some Parent']);
+        $this->actingAs($admin)->get('/staff-attendance')->assertOk()->assertDontSee('Some Parent');
+    }
+
+    public function test_self_check_in_and_out_with_late_threshold_and_idempotency(): void
+    {
+        $teacher = $this->user('teacher');
+        config(['school.staff_late_after' => '07:45']);
+
+        $this->travelTo(now()->setTime(8, 20));
+        Livewire::actingAs($teacher)->test(Pages\Dashboard::class)->call('checkIn');
+        $r = \App\Models\StaffAttendance::where('user_id', $teacher->id)->first();
+        $this->assertSame(['late', '08:20:00', 'self'], [$r->status, $r->check_in_at, $r->method]);
+
+        $this->travelTo(now()->setTime(9, 0));
+        Livewire::actingAs($teacher)->test(Pages\Dashboard::class)->call('checkIn');          // second tap keeps the first time
+        $this->assertSame('08:20:00', $r->fresh()->check_in_at);
+
+        $this->travelTo(now()->setTime(14, 30));
+        Livewire::actingAs($teacher)->test(Pages\Dashboard::class)->call('checkOut');
+        $this->assertSame('14:30:00', $r->fresh()->check_out_at);
+        $this->assertDatabaseCount('staff_attendances', 1);
+
+        // a parent has no staff attendance; checking out without checking in does nothing
+        Livewire::actingAs($this->user('parent'))->test(Pages\Dashboard::class)->call('checkIn')->assertForbidden();
+        $other = $this->user('accountant');
+        Livewire::actingAs($other)->test(Pages\Dashboard::class)->call('checkOut');
+        $this->assertDatabaseMissing('staff_attendances', ['user_id' => $other->id]);
+    }
+
+    public function test_on_time_check_in_and_leave_is_not_overridden(): void
+    {
+        $this->travelTo(now()->setTime(7, 30));
+        $u = $this->user('accountant');
+        Livewire::actingAs($u)->test(Pages\Dashboard::class)->call('checkIn');
+        $this->assertSame('present', \App\Models\StaffAttendance::where('user_id', $u->id)->value('status'));
+
+        $v = $this->user('teacher');
+        \App\Models\StaffAttendance::create(['user_id' => $v->id, 'date' => today()->toDateString(), 'status' => 'leave']);
+        Livewire::actingAs($v)->test(Pages\Dashboard::class)->call('checkIn');
+        $this->assertSame('leave', \App\Models\StaffAttendance::where('user_id', $v->id)->value('status'));
+    }
+
+    public function test_monthly_staff_report_numbers_and_csv(): void
+    {
+        $t = $this->user('teacher');
+        $t->update(['name' => '=HYPERLINK("x")']);
+        $month = today()->format('Y-m');
+        foreach ([['01', 'present', '08:00:00', '14:00:00'], ['02', 'late', '08:30:00', '14:30:00'], ['03', 'absent', null, null], ['04', 'leave', null, null]] as [$d, $st, $in, $out]) {
+            \App\Models\StaffAttendance::create(['user_id' => $t->id, 'date' => "$month-$d", 'status' => $st, 'check_in_at' => $in, 'check_out_at' => $out]);
+        }
+        $row = app(\App\Services\ReportService::class)->staffAttendanceSummary($month)->firstWhere('name', $t->name);
+        $this->assertSame([1, 1, 1, 1, 12.0, 66.7], [$row['present'], $row['late'], $row['absent'], $row['leave'], $row['hours'], $row['rate']]);   // leave not counted in the rate
+
+        $csv = $this->actingAs($this->user('admin'))->get('/reports/staff-attendance.csv?month='.$month)->assertOk()->streamedContent();
+        $this->assertStringContainsString("'=HYPERLINK", $csv);                    // formula injection neutralised
+        $this->get('/staff-attendance?tab=monthly')->assertOk()->assertSee('66.7');
     }
 }

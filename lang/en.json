@@ -9,5 +9,8 @@
  "sent": "Sent",
  "failed": "Failed",
  "pending": "Pending",
- "Good afternoon": "Good afternoon"
+ "Good afternoon": "Good afternoon",
+ "leave": "Leave",
+ "Attendance": "Student attendance",
+ "Attendance report": "Student attendance report"
 }

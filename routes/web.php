@@ -59,6 +59,8 @@ Route::middleware('auth')->group(function () {
         Route::get('users', Livewire\Users::class)->name('users');
         Route::get('setup', Livewire\Setup::class)->name('setup');
         Route::get('years', Livewire\Years::class)->name('years');
+        Route::get('staff-attendance', Livewire\StaffAttendance::class)->name('staff-attendance');
+        Route::get('reports/staff-attendance.csv', [\App\Http\Controllers\ReportController::class, 'staffCsv'])->name('staff-csv');
         Route::get('students/{student}/card', [\App\Http\Controllers\RosterController::class, 'card'])->name('student-card');
     });
 });

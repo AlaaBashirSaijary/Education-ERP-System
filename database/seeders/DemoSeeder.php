@@ -11,6 +11,7 @@ use App\Models\Mark;
 use App\Models\NotificationLog;
 use App\Models\Payment;
 use App\Models\SchoolClass;
+use App\Models\StaffAttendance;
 use App\Models\Student;
 use App\Models\Subject;
 use App\Models\TimetableEntry;
@@ -133,6 +134,24 @@ class DemoSeeder extends Seeder
                         'ends_at' => sprintf('%02d:%02d', 8 + intdiv($p * 50 - 5, 60), ($p * 50 - 5) % 60), 'room' => 'قاعة '.($ci + 1).$p,
                     ]);
                 }
+            }
+        }
+
+        // Staff attendance for the last 7 working days, with a few lates, absences and one leave.
+        foreach (User::staff()->get() as $i => $staff) {
+            foreach (range(0, 6) as $back) {
+                $day = today()->subDays($back);
+                if (in_array($day->dayOfWeek, [5, 6], true) || ($back === 0 && $i % 3 === 2)) {
+                    continue; // weekend; and today some have not checked in yet
+                }
+                $r = mt_rand(1, 100);
+                $status = $r <= 78 ? 'present' : ($r <= 90 ? 'late' : ($r <= 96 ? 'leave' : 'absent'));
+                $in = $status === 'late' ? sprintf('07:%02d:00', mt_rand(50, 59)) : sprintf('07:%02d:00', mt_rand(15, 44));
+                StaffAttendance::firstOrCreate(['user_id' => $staff->id, 'date' => $day->toDateString()], [
+                    'status' => $status, 'method' => $i % 2 ? 'self' : 'manual',
+                    'check_in_at' => in_array($status, ['present', 'late'], true) ? $in : null,
+                    'check_out_at' => in_array($status, ['present', 'late'], true) && $back > 0 ? sprintf('14:%02d:00', mt_rand(0, 40)) : null,
+                ]);
             }
         }
 

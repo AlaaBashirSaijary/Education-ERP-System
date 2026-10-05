@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Models\Attendance;
 use App\Models\Payment;
 use App\Models\SchoolClass;
+use App\Models\StaffAttendance;
+use App\Models\User;
 use App\Models\Student;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -109,5 +111,31 @@ class ReportService
 
             return ['date' => $d->toDateString(), 'present' => (int) ($r->present ?? 0), 'absent' => (int) ($r->absent ?? 0)];
         })->all();
+    }
+
+    /**
+     * Per-employee attendance for a month ("YYYY-MM"): counts, worked hours, attendance rate.
+     * Leave days are excluded from the rate so approved leave does not count against anyone.
+     *
+     * @return Collection<int, array{name:string,role:string,present:int,late:int,absent:int,leave:int,hours:float,rate:?float}>
+     */
+    public function staffAttendanceSummary(string $month): Collection
+    {
+        $from = Carbon::createFromFormat('Y-m', $month)->startOfMonth();
+        $records = StaffAttendance::whereBetween('date', [$from->toDateString(), $from->copy()->endOfMonth()->toDateString()])
+            ->get()->groupBy('user_id');
+
+        return User::staff()->orderBy('role')->orderBy('name')->get()->map(function (User $u) use ($records) {
+            $rows = $records->get($u->id, collect());
+            $count = fn (string $st) => $rows->where('status', $st)->count();
+            [$p, $l, $a, $lv] = [$count('present'), $count('late'), $count('absent'), $count('leave')];
+            $minutes = $rows->sum(fn (StaffAttendance $r) => $r->workedMinutes() ?? 0);
+            $counted = $p + $l + $a;
+
+            return [
+                'name' => $u->name, 'role' => $u->role, 'present' => $p, 'late' => $l, 'absent' => $a, 'leave' => $lv,
+                'hours' => round($minutes / 60, 1), 'rate' => $counted ? round(($p + $l) / $counted * 100, 1) : null,
+            ];
+        });
     }
 }

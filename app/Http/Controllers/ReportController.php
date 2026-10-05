@@ -18,6 +18,15 @@ class ReportController extends Controller
             $rows->map(fn ($r) => [$r['student'], $r['class'], $r['present'], $r['late'], $r['absent'], $r['rate']])->all());
     }
 
+    public function staffCsv(Request $request, ReportService $reports)
+    {
+        $d = $request->validate(['month' => 'required|date_format:Y-m']);
+
+        return $this->csv("staff-attendance-{$d['month']}.csv",
+            [__('Employee'), __('Role'), __('present'), __('late'), __('absent'), __('leave'), __('Hours'), __('Attendance rate').' %'],
+            $reports->staffAttendanceSummary($d['month'])->map(fn ($r) => [$r['name'], __('role.'.$r['role']), $r['present'], $r['late'], $r['absent'], $r['leave'], $r['hours'], $r['rate']])->all());
+    }
+
     public function financeCsv(ReportService $reports)
     {
         return $this->csv('finance-by-class.csv',

@@ -5,6 +5,8 @@ namespace App\Livewire;
 use App\Models\Attendance;
 use App\Models\Fee;
 use App\Models\NotificationLog;
+use App\Models\StaffAttendance;
+use App\Services\StaffAttendanceService;
 use App\Models\Student;
 use App\Models\TimetableEntry;
 use App\Services\ReportService;
@@ -13,6 +15,20 @@ use Livewire\Component;
 
 class Dashboard extends Component
 {
+    public function checkIn(StaffAttendanceService $service): void
+    {
+        $r = $service->checkIn(auth()->user());
+        session()->flash($r->status === 'leave' ? 'warn' : 'ok', $r->status === 'leave'
+            ? __('Today is recorded as leave for you.') : __('Checked in at :t.', ['t' => substr($r->check_in_at, 0, 5)]));
+    }
+
+    public function checkOut(StaffAttendanceService $service): void
+    {
+        $r = $service->checkOut(auth()->user());
+        $r ? session()->flash('ok', __('Checked out at :t.', ['t' => substr($r->check_out_at, 0, 5)]))
+            : session()->flash('warn', __('Check in first.'));
+    }
+
     public function render(ReportService $reports)
     {
         $user = auth()->user();
@@ -50,13 +66,23 @@ class Dashboard extends Component
             : collect();
         $balances = $children->mapWithKeys(fn ($c) => [$c->id => $fees->where('student_id', $c->id)->sum(fn ($f) => (float) $f->balance)]);
 
+        $myToday = $user->isStaff() ? app(StaffAttendanceService::class)->today($user) : null;
+        $staffToday = null;
+        if ($user->hasRole('admin')) {
+            $c = StaffAttendance::whereDate('date', $today->toDateString())->selectRaw('status, count(*) as n')->groupBy('status')->pluck('n', 'status');
+            $total = \App\Models\User::staff()->count();
+            $staffToday = ['present' => (int) ($c['present'] ?? 0), 'late' => (int) ($c['late'] ?? 0), 'absent' => (int) ($c['absent'] ?? 0),
+                'leave' => (int) ($c['leave'] ?? 0), 'total' => $total];
+            $staffToday['none'] = max(0, $total - ($staffToday['present'] + $staffToday['late'] + $staffToday['absent'] + $staffToday['leave']));
+        }
+
         $hour = now()->hour;
         $greeting = $hour < 12 ? __('Good morning') : ($hour < 18 ? __('Good afternoon') : __('Good evening'));
 
         return view('livewire.dashboard', [
             'today' => $today_, 'active' => $active, 'overdue' => $overdue, 'outstanding' => $fees->sum(fn ($f) => (float) $f->balance),
             'billed' => $billed, 'collected' => $collected, 'year' => $year, 'greeting' => $greeting,
-            'lessons' => $lessons, 'children' => $children, 'balances' => $balances,
+            'myToday' => $myToday, 'staffToday' => $staffToday, 'lessons' => $lessons, 'children' => $children, 'balances' => $balances,
             'trend' => $user->hasRole('parent') ? [] : $reports->attendanceTrend(7),
             'collections' => $user->hasRole('admin', 'accountant') ? $reports->collectionsByMonth(6) : [],
             'messages' => $user->hasRole('admin') ? NotificationLog::with('student')->latest()->take(5)->get() : collect(),

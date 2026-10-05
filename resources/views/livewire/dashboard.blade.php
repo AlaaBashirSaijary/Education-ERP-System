@@ -34,6 +34,34 @@
         </div>
     </section>
 
+    {{-- My attendance (staff self check-in) --}}
+    @if ($user->isStaff())
+        <section class="card flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-4">
+                <span class="grid h-12 w-12 place-items-center rounded-xl bg-brand-100 text-brand-700"><x-icon name="staff" class="h-6 w-6" /></span>
+                <div>
+                    <h2 class="text-base font-bold text-slate-900">{{ __('My attendance today') }}</h2>
+                    <div class="mt-0.5 flex flex-wrap items-center gap-2 text-sm text-slate-500">
+                        @if ($myToday)
+                            <x-status-badge :status="$myToday->status" />
+                            @if ($myToday->check_in_at)<span>{{ __('In') }} <b class="text-slate-800 font-num" dir="ltr">{{ substr($myToday->check_in_at, 0, 5) }}</b></span>@endif
+                            @if ($myToday->check_out_at)<span>{{ __('Out') }} <b class="text-slate-800 font-num" dir="ltr">{{ substr($myToday->check_out_at, 0, 5) }}</b></span>@endif
+                        @else
+                            <span>{{ __('You have not checked in yet.') }}</span>
+                        @endif
+                    </div>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                @if (! $myToday?->check_in_at && $myToday?->status !== 'leave')
+                    <button class="btn-primary" wire:click="checkIn" wire:loading.attr="disabled"><x-icon name="check" class="h-4 w-4" /> {{ __('Check in') }}</button>
+                @elseif ($myToday?->check_in_at)
+                    <button class="btn-ghost" wire:click="checkOut" wire:loading.attr="disabled"><x-icon name="logout" class="h-4 w-4" /> {{ $myToday->check_out_at ? __('Update check-out') : __('Check out') }}</button>
+                @endif
+            </div>
+        </section>
+    @endif
+
     {{-- KPIs --}}
     @unless ($isParent)
     <div class="stagger grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
@@ -177,6 +205,19 @@
                 @empty
                     <x-empty icon="fees" :title="__('Nothing overdue 🎉')" />
                 @endforelse
+            </section>
+        @endif
+
+        @if ($staffToday)
+            <section class="card-flat overflow-hidden">
+                <div class="flex items-center justify-between border-b border-slate-100 px-5 py-4"><h2 class="text-base font-bold text-slate-900">{{ __('Staff today') }}</h2><a class="link text-sm" href="{{ route('staff-attendance') }}" wire:navigate>{{ __('Open sheet') }}</a></div>
+                <div class="grid grid-cols-5 gap-2 p-5 text-center text-xs">
+                    <div class="rounded-xl bg-emerald-50 py-2"><div class="font-display text-xl font-bold text-emerald-700 font-num">{{ $staffToday['present'] }}</div><div class="text-emerald-700">{{ __('present') }}</div></div>
+                    <div class="rounded-xl bg-amber-50 py-2"><div class="font-display text-xl font-bold text-amber-700 font-num">{{ $staffToday['late'] }}</div><div class="text-amber-700">{{ __('late') }}</div></div>
+                    <div class="rounded-xl bg-rose-50 py-2"><div class="font-display text-xl font-bold text-rose-700 font-num">{{ $staffToday['absent'] }}</div><div class="text-rose-700">{{ __('absent') }}</div></div>
+                    <div class="rounded-xl bg-brand-50 py-2"><div class="font-display text-xl font-bold text-brand-700 font-num">{{ $staffToday['leave'] }}</div><div class="text-brand-700">{{ __('leave') }}</div></div>
+                    <div class="rounded-xl bg-slate-100 py-2"><div class="font-display text-xl font-bold text-slate-600 font-num">{{ $staffToday['none'] }}</div><div class="text-slate-600">{{ __('Not recorded') }}</div></div>
+                </div>
             </section>
         @endif
 

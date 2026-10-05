@@ -28,6 +28,7 @@
             ['messages', 'messages', 'Parent messages', ['admin']],
         ]],
         ['Administration', [
+            ['staff-attendance', 'staff', 'Staff attendance', ['admin']],
             ['years', 'years', 'Academic years', ['admin']],
             ['users', 'users', 'Users', ['admin']],
             ['setup', 'setup', 'Setup', ['admin']],

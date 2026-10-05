@@ -49,6 +49,19 @@ class User extends Authenticatable
         ];
     }
 
+    /** Staff = everyone who works at the school (not parents). */
+    public const STAFF_ROLES = ['admin', 'teacher', 'accountant'];
+
+    public function scopeStaff($query)
+    {
+        return $query->whereIn('role', self::STAFF_ROLES);
+    }
+
+    public function isStaff(): bool
+    {
+        return in_array($this->role, self::STAFF_ROLES, true);
+    }
+
     public function hasRole(string ...$roles): bool
     {
         return in_array($this->role, $roles, true);
