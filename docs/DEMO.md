@@ -67,3 +67,17 @@ HTTPS ضروري أيضاً لتثبيت الموقع كتطبيق على اله
 - **الزوار يتشاركون البيانات نفسها.** إن جرّب مديران معاً سيرى كل منهما تغييرات الآخر، وإعادة التهيئة قد تقطع جلسة أحدهم. بيئة معزولة لكل زائر ممكنة لكنها عمل إضافي.
 - هذه نسخة للتجربة فقط. لمدرسة اشترت النظام انشر نسخة **منفصلة** بقاعدتها الخاصة وفق `DEPLOY.md` **دون** `SCHOOL_DEMO_MODE`.
 - إعادة التهيئة تمسح كل شيء بما فيه المستخدمون الذين أنشأهم الزوار.
+
+## Option: free static demo on GitHub Pages (no server, no card)
+
+GitHub Pages only serves static files, so it cannot run Laravel. Instead the repo ships a
+clickable demo built from the app's real pages (admin, teacher, accountant, parent, Arabic/English,
+light/dark, desktop/phone). Buttons only simulate; nothing is saved.
+
+1. GitHub repo → **Settings → Pages → Source: GitHub Actions** (once).
+2. Push to the branch (or Actions → *Publish demo to GitHub Pages* → Run workflow).
+3. Open `https://<owner>.github.io/<repo>/`.
+4. To show a "تواصل معنا" button, edit `docs/demo/config.json` (`whatsapp`: digits with country code, or `email`, and `name`).
+
+Rebuild after UI changes: `npm run build && node scripts/build-static-demo.cjs`, then commit `docs/demo`.
+Note: the repo is public, so the source code is visible; use a separate repo containing only `docs/demo` if that matters.

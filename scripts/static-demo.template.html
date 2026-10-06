@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>تجربة نظام المدرسة</title>
+<link rel="icon" href="data:,">
+<style>*{box-sizing:border-box}[hidden]{display:none!important}body{margin:0}
+/* Layout: slim control bar above one large frame that renders the app's real pages. */
+:root {
+  --bg: #f4f5f8; --panel: #ffffff; --fg: #1c2233; --muted: #667089; --line: #dde1ea;
+  --accent: #4338ca; --accent-fg: #ffffff; --ok: #0f8a5f; --warn-bg: #fff6e0; --warn-fg: #7a5200;
+  --font: system-ui, -apple-system, 'Segoe UI', Tahoma, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0f1320; --panel: #181d2e; --fg: #e8ebf5; --muted: #98a1bb; --line: #2a3047;
+  --accent: #8c93ff; --accent-fg: #0f1320; --ok: #4cd6a0; --warn-bg: #2b2412; --warn-fg: #f0c765; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0f1320; --panel: #181d2e; --fg: #e8ebf5; --muted: #98a1bb; --line: #2a3047;
+  --accent: #8c93ff; --accent-fg: #0f1320; --ok: #4cd6a0; --warn-bg: #2b2412; --warn-fg: #f0c765; color-scheme: dark; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font); font-size: 15px; padding-inline: 16px; padding-block: 16px 24px; }
+.wrap { max-width: 1280px; margin-inline: auto; display: grid; gap: 12px; }
+header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; }
+h1 { font-size: 1.25rem; margin: 0; text-wrap: balance; }
+.note { background: var(--warn-bg); color: var(--warn-fg); border-radius: 8px; padding: 8px 12px; font-size: .875rem; line-height: 1.6; }
+.bar { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--panel); }
+.seg button { font: inherit; font-size: .875rem; padding: 6px 14px; border: 0; background: transparent; color: var(--muted); cursor: pointer; }
+.seg button + button { border-inline-start: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); font-weight: 700; }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.pages { display: flex; gap: 6px; overflow-x: auto; padding-block: 2px; min-width: 0; }
+.pages button { font: inherit; font-size: .8125rem; white-space: nowrap; padding: 4px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); cursor: pointer; }
+.pages button[aria-current="page"] { border-color: var(--accent); color: var(--accent); font-weight: 700; }
+a.contact{text-decoration:none}
+.stage { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: flex; justify-content: center; overflow: auto; min-width: 0; }
+iframe { border: 0; background: #fff; border-radius: 6px; width: 100%; height: clamp(520px, calc(100vh - 230px), 900px); box-shadow: 0 0 0 1px var(--line); }
+.stage.phone iframe { width: 390px; max-width: 100%; }
+.toast { position: fixed; inset-inline: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); margin-inline: auto; width: fit-content; max-width: calc(100% - 32px); background: var(--fg); color: var(--bg); padding: 8px 16px; border-radius: 8px; font-size: .875rem; }
+.foot { color: var(--muted); font-size: .8125rem; line-height: 1.7; }
+code { direction: ltr; unicode-bidi: isolate; background: var(--bg); padding: 1px 6px; border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<div class="wrap" dir="rtl" lang="ar">
+  <header>
+    <h1 id="title">تجربة نظام المدرسة</h1>
+    <div class="bar" role="group" aria-label="خيارات العرض">
+      <div class="seg" id="roleSeg"><button data-role="guest">زائر</button><button data-role="admin">مدير</button><button data-role="teacher">معلم</button><button data-role="accountant">محاسب</button><button data-role="parent">ولي أمر</button></div>
+      <div class="seg" id="langSeg"><button data-lang="ar">العربية</button><button data-lang="en">English</button></div>
+      <div class="seg" id="themeSeg"><button data-theme-set="light">فاتح</button><button data-theme-set="dark">داكن</button></div>
+      <a class="seg contact" id="contact" hidden target="_blank" rel="noopener"><button type="button" tabindex="-1" aria-pressed="true">تواصل معنا</button></a>
+      <div class="seg" id="devSeg"><button data-dev="desktop">حاسوب</button><button data-dev="phone">جوال</button></div>
+    </div>
+  </header>
+  <div class="note">هذه نسخة تجريبية مبنية من صفحات النظام الحقيقية ببيانات وهمية. اختر دوراً (مدير، معلم، محاسب، ولي أمر) وتنقّل بين الصفحات. الأزرار تعمل للعرض فقط ولا يُحفظ شيء.</div>
+  <nav class="pages" id="pages" aria-label="الصفحات"></nav>
+  <div class="stage" id="stage"><iframe id="frame" title="معاينة التطبيق" sandbox="allow-scripts allow-forms"></iframe></div>
+  <p class="foot">هذه معاينة ثابتة لا تتصل بخادم. النسخة الحقيقية تحفظ البيانات وترسل رسائل واتساب/SMS لأولياء الأمور.</p>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script type="application/json" id="snap">__DATA__</script>
+<script type="application/json" id="appcss">__CSS__</script>
+<script>
+(function () {
+  var D = JSON.parse(document.getElementById('snap').textContent);
+  var CSS = JSON.parse(document.getElementById('appcss').textContent);
+  var LABEL = {
+    '/': ['الصفحة الرئيسية', 'Home'], '/dashboard': ['لوحة التحكم', 'Dashboard'], '/students': ['الطلاب', 'Students'], '/attendance': ['حضور الطلاب', 'Student attendance'],
+    '/gate': ['ماسح البوابة', 'Gate'], '/grades': ['العلامات', 'Grades'], '/fees': ['الأقساط', 'Fees'], '/timetable': ['الجدول', 'Timetable'],
+    '/reports/attendance': ['تقرير حضور الطلاب', 'Student attendance report'], '/reports/finance': ['التقرير المالي', 'Finance report'],
+    '/announcements': ['الإعلانات', 'Announcements'], '/messages': ['الرسائل', 'Messages'], '/users': ['المستخدمون', 'Users'],
+    '/setup': ['الإعداد', 'Setup'], '/staff-attendance': ['حضور الموظفين', 'Staff attendance'], '/login': ['تسجيل الدخول', 'Sign in'], '/register': ['إنشاء حساب', 'Create account'], '/forgot-password': ['نسيت كلمة المرور', 'Forgot password'], '/students/1': ['ملف الطالب', 'Student profile'], '/years': ['الأعوام الدراسية', 'Academic years'], '/profile': ['الملف الشخصي', 'Profile'], '/students/1/report-card': ['التقرير الدراسي', 'Report card']
+  };
+  var state = { role: 'guest', lang: 'ar', dev: 'desktop', path: '/', dark: false };
+  try { var saved = JSON.parse(localStorage.getItem('preview-state') || '{}'); ['lang', 'dev', 'dark'].forEach(function (k) { if (saved[k]) state[k] = saved[k]; }); } catch (e) {}
+
+  var frame = document.getElementById('frame'), toastEl = document.getElementById('toast'), tt;
+  function toast(msg) { toastEl.textContent = msg; toastEl.hidden = false; clearTimeout(tt); tt = setTimeout(function () { toastEl.hidden = true; }, 2600); }
+
+  var IFRAME_JS = '(' + function () {
+    document.querySelectorAll('form').forEach(function (f) { f.noValidate = true; });
+    document.addEventListener('click', function (e) {
+      var aside = document.querySelector('aside');
+      var themeBtn = e.target.closest('button[aria-label="Toggle theme"], button[aria-label="تبديل المظهر"]');
+      if (themeBtn) { parent.postMessage({ t: 'theme' }, '*'); return; }
+      var menu = e.target.closest('button[aria-label="Menu"], button[aria-label="القائمة"]');
+      if (menu && aside) { aside.classList.toggle('!translate-x-0'); return; }
+      var a = e.target.closest('a[href]');
+      if (a) {
+        var h = a.getAttribute('href');
+        if (h.charAt(0) === '#') { e.preventDefault(); var el = document.getElementById(h.slice(1)); if (el) el.scrollIntoView({ behavior: 'smooth' }); return; }
+        e.preventDefault(); parent.postMessage({ t: /^(https?:|mailto:|tel:)/.test(h) && h.indexOf(location.host || '\0') < 0 ? 'ext' : 'nav', href: h }, '*'); return;
+      }
+      if (aside && !e.target.closest('aside')) aside.classList.remove('!translate-x-0');
+      var b = e.target.closest('button');
+      if (b && !e.target.closest('summary') && !(b.form && b.type === 'submit')) { e.preventDefault(); parent.postMessage({ t: 'demo' }, '*'); }
+    }, true);
+    document.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var a = (e.target.getAttribute('action') || '');
+      var dm = a.match(/\/demo\/login\/(\w+)$/);
+      if (dm) { parent.postMessage({ t: 'role', role: dm[1] }, '*'); return; }
+      var t = /\/login$/.test(a) ? 'login' : (/\/register$/.test(a) ? 'register' : (/\/logout$/.test(a) ? 'logout' : 'demo'));
+      parent.postMessage({ t: t }, '*');
+    }, true);
+  }.toString() + ')();';
+
+  function build(page) {
+    return '<!doctype html><html lang="' + page.lang + '" dir="' + page.dir + '"' + (state.dark ? ' class="dark"' : '') + '><head><meta charset="utf-8">' +
+      '<meta name="viewport" content="width=device-width, initial-scale=1">' +
+            '<style>' + CSS + 'html.dark [x-show="!dark"]{display:none!important}html.dark [x-show="dark"]{display:inline!important}</style></head><body>' + page.body + '<scr' + 'ipt>' + IFRAME_JS + '</scr' + 'ipt></body></html>';
+  }
+
+  function render() {
+    var page = D[state.role][state.lang][state.path];
+    if (!page) { toast('هذه الصفحة غير متاحة في المعاينة'); return; }
+    frame.srcdoc = build(page);
+    document.getElementById('stage').className = 'stage' + (state.dev === 'phone' ? ' phone' : '');
+    document.querySelectorAll('#roleSeg button').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.role === state.role); });
+    document.querySelectorAll('#langSeg button').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.lang === state.lang); });
+    document.querySelectorAll('#devSeg button').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.dev === state.dev); });
+    document.querySelectorAll('#themeSeg button').forEach(function (b) { b.setAttribute('aria-pressed', (b.dataset.themeSet === 'dark') === state.dark); });
+    var nav = document.getElementById('pages'); nav.textContent = '';
+    Object.keys(D[state.role][state.lang]).forEach(function (p) {
+      var b = document.createElement('button'); b.type = 'button';
+      b.textContent = (LABEL[p] || [p, p])[state.lang === 'ar' ? 0 : 1];
+      if (p === state.path) b.setAttribute('aria-current', 'page');
+      b.onclick = function () { go(p); };
+      nav.appendChild(b);
+    });
+    try { localStorage.setItem('preview-state', JSON.stringify({ lang: state.lang, dev: state.dev, dark: state.dark })); } catch (e) {}
+  }
+  function go(p) { state.path = p; render(); }
+
+  window.addEventListener('message', function (e) {
+    if (e.source !== frame.contentWindow || !e.data) return;
+    if (e.data.t === 'role') { state.role = e.data.role; state.path = '/dashboard'; render(); return; }
+    if (e.data.t === 'ext') { try { window.open(e.data.href, '_blank', 'noopener'); } catch (x) {} return; }
+    if (e.data.t === 'login') { state.role = 'admin'; state.path = '/dashboard'; render(); return; }
+    if (e.data.t === 'register') { state.role = 'parent'; state.path = '/dashboard'; render(); toast('تم إنشاء الحساب وربط الطالب (محاكاة)'); return; }
+    if (e.data.t === 'logout') { state.role = 'guest'; state.path = '/'; render(); return; }
+    if (e.data.t === 'theme') { state.dark = !state.dark; render(); return; }
+    if (e.data.t === 'demo') { toast('للعرض فقط: لا يتم حفظ أي تغيير'); return; }
+    if (e.data.t !== 'nav') return;
+    var path; try { path = new URL(e.data.href, 'http://x').pathname.replace(/\/+$/, '') || '/'; } catch (x) { return; }
+    var m = path.match(/^\/lang\/(ar|en)$/);
+    if (m) { state.lang = m[1]; render(); return; }
+    if (D[state.role][state.lang][path]) go(path); else toast('هذه الصفحة غير متاحة في المعاينة');
+  });
+
+  document.getElementById('roleSeg').onclick = function (e) { var r = e.target.dataset.role; if (r) { state.role = r; state.path = r === 'guest' ? '/' : '/dashboard'; render(); } };
+  document.getElementById('langSeg').onclick = function (e) { var l = e.target.dataset.lang; if (l) { state.lang = l; render(); } };
+  document.getElementById('themeSeg').onclick = function (e) { var v = e.target.dataset.themeSet; if (v) { state.dark = v === 'dark'; render(); } };
+  document.getElementById('devSeg').onclick = function (e) { var d = e.target.dataset.dev; if (d) { state.dev = d; render(); } };
+  render();
+  fetch('config.json', { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : {}; }).then(function (c) {
+    var link = c.whatsapp ? 'https://wa.me/' + String(c.whatsapp).replace(/\D/g, '') : (c.email ? 'mailto:' + c.email : '');
+    if (c.name) document.getElementById('title').textContent = 'تجربة نظام ' + c.name;
+    if (c.name) document.title = 'تجربة نظام ' + c.name;
+    if (link) { var a = document.getElementById('contact'); a.href = link; a.hidden = false; }
+  }).catch(function () {});
+})();
+</script>
+
+</body>
+</html>
