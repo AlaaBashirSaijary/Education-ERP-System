@@ -39,6 +39,14 @@ iframe { border: 0; background: #fff; border-radius: 6px; width: 100%; height: c
 .toast { position: fixed; inset-inline: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); margin-inline: auto; width: fit-content; max-width: calc(100% - 32px); background: var(--fg); color: var(--bg); padding: 8px 16px; border-radius: 8px; font-size: .875rem; }
 .foot { color: var(--muted); font-size: .8125rem; line-height: 1.7; }
 code { direction: ltr; unicode-bidi: isolate; background: var(--bg); padding: 1px 6px; border-radius: 4px; }
+
+/* Site-only view: the app fills the whole window; the demo shell stays out of the way. */
+header, .note, .pages, .foot { display: none !important; }
+body { padding: 0 !important; background: #fff; }
+.wrap { max-width: none !important; display: block !important; }
+.stage { border: 0 !important; border-radius: 0 !important; padding: 0 !important; background: transparent !important; overflow: hidden !important; }
+iframe { border-radius: 0 !important; box-shadow: none !important; height: 100vh !important; height: 100dvh !important; }
+#contact { position: fixed; inset-block-end: 16px; inset-inline-start: 16px; z-index: 5; background: #1c2233; color: #fff; text-decoration: none; font-size: .875rem; font-weight: 700; padding: 8px 16px; border-radius: 999px; box-shadow: 0 4px 14px rgba(0,0,0,.3); }
 </style>
 </head>
 <body>
@@ -50,8 +58,7 @@ code { direction: ltr; unicode-bidi: isolate; background: var(--bg); padding: 1p
       <div class="seg" id="roleSeg"><button data-role="guest">زائر</button><button data-role="admin">مدير</button><button data-role="teacher">معلم</button><button data-role="accountant">محاسب</button><button data-role="parent">ولي أمر</button></div>
       <div class="seg" id="langSeg"><button data-lang="ar">العربية</button><button data-lang="en">English</button></div>
       <div class="seg" id="themeSeg"><button data-theme-set="light">فاتح</button><button data-theme-set="dark">داكن</button></div>
-      <a class="seg contact" id="contact" hidden target="_blank" rel="noopener"><button type="button" tabindex="-1" aria-pressed="true">تواصل معنا</button></a>
-      <div class="seg" id="devSeg"><button data-dev="desktop">حاسوب</button><button data-dev="phone">جوال</button></div>
+            <div class="seg" id="devSeg"><button data-dev="desktop">حاسوب</button><button data-dev="phone">جوال</button></div>
     </div>
   </header>
   <div class="note">هذه نسخة تجريبية مبنية من صفحات النظام الحقيقية ببيانات وهمية. اختر دوراً (مدير، معلم، محاسب، ولي أمر) وتنقّل بين الصفحات. الأزرار تعمل للعرض فقط ولا يُحفظ شيء.</div>
@@ -59,6 +66,7 @@ code { direction: ltr; unicode-bidi: isolate; background: var(--bg); padding: 1p
   <div class="stage" id="stage"><iframe id="frame" title="معاينة التطبيق" sandbox="allow-scripts allow-forms"></iframe></div>
   <p class="foot">هذه معاينة ثابتة لا تتصل بخادم. النسخة الحقيقية تحفظ البيانات وترسل رسائل واتساب/SMS لأولياء الأمور.</p>
 </div>
+<a id="contact" hidden target="_blank" rel="noopener">تواصل معنا</a>
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 <script type="application/json" id="snap">__DATA__</script>
