@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -9,6 +10,8 @@ use Illuminate\Support\Str;
 
 class Student extends Model
 {
+    use Auditable;
+
     protected $fillable = [
         'student_no', 'name', 'school_class_id', 'parent_id', 'parent_phone',
         'qr_token', 'fingerprint_id', 'active', 'graduated_at',

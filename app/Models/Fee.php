@@ -3,12 +3,15 @@
 namespace App\Models;
 
 use App\Models\Concerns\BelongsToAcademicYear;
+use App\Models\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Fee extends Model
 {
+    use Auditable;
+
     use BelongsToAcademicYear;
 
     protected $fillable = ['student_id', 'title', 'amount', 'due_date', 'academic_year_id'];
@@ -47,5 +50,10 @@ class Fee extends Model
         }
 
         return (float) $this->paid > 0 ? 'partial' : 'unpaid';
+    }
+
+    public function auditLabel(): string
+    {
+        return trim(($this->student?->name ?? '').' — '.$this->title, ' —');
     }
 }

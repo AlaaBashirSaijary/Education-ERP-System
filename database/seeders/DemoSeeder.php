@@ -170,5 +170,24 @@ class DemoSeeder extends Seeder
                     'status' => $i === 3 ? 'failed' : 'sent', 'error' => $i === 3 ? 'Invalid number' : null]);
             }
         }
+
+        // A few believable entries so the audit trail is not empty on a fresh demo.
+        if (! \App\Models\AuditLog::exists()) {
+            $who = fn (string $role) => User::where('role', $role)->first();
+            $rows = [
+                ['teacher', 'updated', 'Mark', 'علامة الرياضيات', 'mark', '38', '44', 70],
+                ['accountant', 'created', 'Payment', 'دفعة قسط', 'amount', null, '250', 180],
+                ['admin', 'updated', 'Student', 'تعديل هاتف ولي الأمر', 'parent_phone', '+96279000000', '+96279002000', 400],
+                ['accountant', 'updated', 'Fee', 'تعديل موعد استحقاق', 'due_date', '2026-10-01', '2026-10-15', 900],
+            ];
+            foreach ($rows as $k => [$role, $event, $type, $label, $field, $old, $new, $minutes]) {
+                $u = $who($role);
+                \App\Models\AuditLog::create([
+                    'user_id' => $u?->id, 'user_name' => $u?->name, 'event' => $event, 'auditable_type' => $type, 'auditable_id' => $k + 1,
+                    'label' => $label, 'old_values' => $old === null ? null : [$field => $old], 'new_values' => [$field => $new], 'ip' => '127.0.0.1',
+                    'created_at' => now()->subMinutes($minutes),
+                ]);
+            }
+        }
     }
 }

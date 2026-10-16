@@ -25,7 +25,7 @@ const env = {
 
 const PAGES = {
   guest: ['/', '/login', '/register', '/forgot-password'],
-  admin: ['/dashboard', '/students', '/students/1', '/attendance', '/gate', '/grades', '/fees', '/timetable', '/years', '/staff-attendance', '/reports/attendance', '/reports/finance', '/announcements', '/messages', '/users', '/setup', '/profile', '/students/1/report-card'],
+  admin: ['/dashboard', '/students', '/students/1', '/attendance', '/gate', '/grades', '/fees', '/timetable', '/years', '/staff-attendance', '/reports/attendance', '/reports/finance', '/announcements', '/messages', '/users', '/audit', '/students/import', '/setup', '/profile', '/students/1/report-card'],
   teacher: ['/dashboard', '/students', '/attendance', '/grades', '/timetable'],
   accountant: ['/dashboard', '/fees', '/reports/finance'],
   parent: ['/dashboard', '/students/1', '/fees', '/timetable', '/students/1/report-card'],

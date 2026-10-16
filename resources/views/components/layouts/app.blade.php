@@ -31,6 +31,7 @@
             ['staff-attendance', 'staff', 'Staff attendance', ['admin']],
             ['years', 'years', 'Academic years', ['admin']],
             ['users', 'users', 'Users', ['admin']],
+            ['audit', 'shield', 'Audit trail', ['admin']],
             ['setup', 'setup', 'Setup', ['admin']],
         ]],
     ];

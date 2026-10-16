@@ -11,7 +11,8 @@
                 @foreach ($classes as $c)<option value="{{ $c->id }}">{{ $c->name }} {{ $c->section }}</option>@endforeach</select>
             @unless ($isCurrent)<span class="badge-amber self-center">{{ __('Roster of :y', ['y' => $year?->name]) }}</span>@endunless
         </div>
-        @if ($admin)<button class="btn-primary" wire:click="create"><x-icon name="plus" class="h-4 w-4" /> {{ __('Add student') }}</button>@endif
+        @if ($admin)<div class="flex gap-2"><a href="{{ route('students.import') }}" wire:navigate class="btn-ghost"><x-icon name="download" class="h-4 w-4 rotate-180" /> {{ __('Import from file') }}</a>
+            <button class="btn-primary" wire:click="create"><x-icon name="plus" class="h-4 w-4" /> {{ __('Add student') }}</button></div>@endif
     </div>
 
     @if ($showForm && $admin)

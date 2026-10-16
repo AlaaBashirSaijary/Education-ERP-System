@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\DB;
 
 class AcademicYear extends Model
 {
+    use Auditable;
+
     protected $fillable = ['name', 'starts_on', 'ends_on', 'is_current'];
 
     protected $casts = ['starts_on' => 'date', 'ends_on' => 'date', 'is_current' => 'boolean'];

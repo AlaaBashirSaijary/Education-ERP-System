@@ -97,3 +97,9 @@ php artisan migrate              # يضيف الأعوام الدراسية وي
 
 ## عرض تجريبي لمدير مدرسة
 لرفع نسخة عامة يجرّبها مدير المدرسة بنقرة واحدة قبل الشراء (صفحة تعريفية، دخول بكل دور، بيانات وهمية تُعاد تهيئتها تلقائياً، لا رسائل حقيقية): انظر **`docs/DEMO.md`**. أسرع طريقة بلا استضافة ولا بطاقة: `DEMO_WHATSAPP=9627XXXXXXXX bash scripts/share-demo.sh` (رابط عام مؤقت من جهازك). يوجد `render.yaml` للنشر على Render و`docker-compose.yml` لخادم VPS مع HTTPS تلقائي.
+
+## Before going live: import, audit trail, message test
+
+- **Import students from Excel** — admin → Students → *Import from file*. Save the sheet as *CSV UTF-8*; Arabic or English column titles work (`name`, `class` required; `student_no`, `section`, `parent_phone` optional). You see a preview with every problem row before anything is saved. Set `SCHOOL_COUNTRY_CODE=962` so local numbers like `0791234567` become `+962791234567`.
+- **Audit trail** — admin → *Audit trail*. Every create / change / delete of students, marks, exams, fees, payments, attendance corrections, timetable, classes, years and users is recorded with who did it and old → new values. Passwords and QR tokens are never stored there.
+- **Test the messages** — admin → *Parent messages* → *Send a test message*. It sends one message immediately and shows the provider's own answer (expired token, number not allowed…). Set `MESSAGING_CHANNEL=whatsapp|sms` and the keys in `.env` first. This has been verified against mocked WhatsApp Cloud / Twilio requests only; run the test message once with your real account.

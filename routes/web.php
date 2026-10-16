@@ -67,8 +67,11 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::middleware('role:admin')->group(function () {
+        Route::get('students/import', Livewire\StudentImport::class)->name('students.import');
+        Route::get('students/import/template', fn () => response(\App\Services\StudentImporter::template(), 200, ['Content-Type' => 'text/csv; charset=UTF-8', 'Content-Disposition' => 'attachment; filename="students-template.csv"']))->name('students.import.template');
         Route::get('messages', Livewire\Messages::class)->name('messages');
         Route::get('users', Livewire\Users::class)->name('users');
+        Route::get('audit', Livewire\AuditTrail::class)->name('audit');
         Route::get('setup', Livewire\Setup::class)->name('setup');
         Route::get('years', Livewire\Years::class)->name('years');
         Route::get('staff-attendance', Livewire\StaffAttendance::class)->name('staff-attendance');

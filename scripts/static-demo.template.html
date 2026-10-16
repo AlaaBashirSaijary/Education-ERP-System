@@ -80,7 +80,7 @@ iframe { border-radius: 0 !important; box-shadow: none !important; height: 100vh
     '/gate': ['ماسح البوابة', 'Gate'], '/grades': ['العلامات', 'Grades'], '/fees': ['الأقساط', 'Fees'], '/timetable': ['الجدول', 'Timetable'],
     '/reports/attendance': ['تقرير حضور الطلاب', 'Student attendance report'], '/reports/finance': ['التقرير المالي', 'Finance report'],
     '/announcements': ['الإعلانات', 'Announcements'], '/messages': ['الرسائل', 'Messages'], '/users': ['المستخدمون', 'Users'],
-    '/setup': ['الإعداد', 'Setup'], '/staff-attendance': ['حضور الموظفين', 'Staff attendance'], '/login': ['تسجيل الدخول', 'Sign in'], '/register': ['إنشاء حساب', 'Create account'], '/forgot-password': ['نسيت كلمة المرور', 'Forgot password'], '/students/1': ['ملف الطالب', 'Student profile'], '/years': ['الأعوام الدراسية', 'Academic years'], '/profile': ['الملف الشخصي', 'Profile'], '/students/1/report-card': ['التقرير الدراسي', 'Report card']
+    '/setup': ['الإعداد', 'Setup'], '/audit': ['سجل التعديلات', 'Audit trail'], '/students/import': ['استيراد الطلاب', 'Import students'], '/staff-attendance': ['حضور الموظفين', 'Staff attendance'], '/login': ['تسجيل الدخول', 'Sign in'], '/register': ['إنشاء حساب', 'Create account'], '/forgot-password': ['نسيت كلمة المرور', 'Forgot password'], '/students/1': ['ملف الطالب', 'Student profile'], '/years': ['الأعوام الدراسية', 'Academic years'], '/profile': ['الملف الشخصي', 'Profile'], '/students/1/report-card': ['التقرير الدراسي', 'Report card']
   };
   var state = { role: 'guest', lang: 'ar', dev: 'desktop', path: '/', dark: false };
   try { var saved = JSON.parse(localStorage.getItem('preview-state') || '{}'); ['lang', 'dev', 'dark'].forEach(function (k) { if (saved[k]) state[k] = saved[k]; }); } catch (e) {}
